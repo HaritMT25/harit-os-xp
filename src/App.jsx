@@ -131,9 +131,12 @@ export default function App() {
     }
   }, [mode])
 
-  // silent visitor pin — runs once on any mode, city-level only
+  // silent visitor pin — runs once per browser, city-level only
   useEffect(() => {
     if (localStorage.getItem('harit_visitor_pinned')) return
+    // set flag IMMEDIATELY to prevent double-fire (React StrictMode, fast refresh, etc.)
+    localStorage.setItem('harit_visitor_pinned', 'true')
+
     fetch('https://ipapi.co/json/')
       .then(r => r.json())
       .then(data => {
@@ -142,7 +145,7 @@ export default function App() {
         const lon = Math.round((data.longitude || 0) * 10) / 10
         const code = data.country_code || ''
         const flag = code ? code.toUpperCase().split('').map(c => String.fromCodePoint(0x1f1e6 + c.charCodeAt(0) - 65)).join('') : '🌍'
-        return fetch('/api/visits', {
+        fetch('/api/visits', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -152,9 +155,8 @@ export default function App() {
             lat, lon, flag,
             type: 'auto',
           }),
-        }).then(r => r.ok ? r.json() : null)
+        }).catch(() => {})
       })
-      .then(r => { if (r?.ok) localStorage.setItem('harit_visitor_pinned', 'true') })
       .catch(() => {})
   }, [])
 
