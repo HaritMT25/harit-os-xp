@@ -1,13 +1,11 @@
 import React, { Component } from 'react'
 import ReactDOM from 'react-dom/client'
 import App from './App'
+import { Analytics } from '@vercel/analytics/react'
 import './styles/xp-theme.css'
 import './styles/animations.css'
 import './styles/print.css'
 import 'leaflet/dist/leaflet.css'
-import { inject } from '@vercel/analytics'
-
-inject()
 
 // top-level error boundary — never shows a white screen
 class AppErrorBoundary extends Component {
@@ -46,6 +44,7 @@ ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
     <AppErrorBoundary>
       <App />
+      <Analytics />
     </AppErrorBoundary>
   </React.StrictMode>
 )
