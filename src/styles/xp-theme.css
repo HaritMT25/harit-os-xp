@@ -233,3 +233,19 @@
   justify-content: center;
   gap: 8px;
 }
+
+/* ---- SAFARI / iOS FIXES ---- */
+/* prevent flex children from collapsing on Safari */
+img, svg, button { flex-shrink: 0; }
+
+/* fix Safari viewport height on iOS */
+html, body, #root {
+  min-height: 100vh;
+  min-height: -webkit-fill-available;
+}
+
+/* prevent iOS text size adjustment */
+body { -webkit-text-size-adjust: 100%; }
+
+/* fix iOS touch delay */
+button, [role="button"] { touch-action: manipulation; }

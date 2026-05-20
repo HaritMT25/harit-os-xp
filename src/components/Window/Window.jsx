@@ -162,10 +162,10 @@ export default function Window({
         </span>
 
         {/* Window buttons */}
-        <div style={{ display: 'flex', gap: 2 }}>
-          <TitleButton label="🗕" onClick={() => onMinimize(id)} type="normal" />
-          <TitleButton label={maximized ? "🗗" : "🗖"} onClick={() => onMaximize(id)} type="normal" />
-          <TitleButton label="🗙" onClick={() => onClose(id)} type="close" />
+        <div style={{ display: 'flex', gap: 2, flexShrink: 0 }}>
+          <TitleButton icon="min" onClick={() => onMinimize(id)} type="normal" />
+          <TitleButton icon={maximized ? "restore" : "max"} onClick={() => onMaximize(id)} type="normal" />
+          <TitleButton icon="close" onClick={() => onClose(id)} type="close" />
         </div>
       </div>
 
@@ -233,7 +233,14 @@ export default function Window({
   )
 }
 
-function TitleButton({ label, onClick, type }) {
+const BTN_ICONS = {
+  min: <svg width="10" height="10" viewBox="0 0 10 10"><line x1="1" y1="8" x2="9" y2="8" stroke="#fff" strokeWidth="2"/></svg>,
+  max: <svg width="10" height="10" viewBox="0 0 10 10"><rect x="1" y="1" width="8" height="8" fill="none" stroke="#fff" strokeWidth="1.5"/><line x1="1" y1="3" x2="9" y2="3" stroke="#fff" strokeWidth="1.5"/></svg>,
+  restore: <svg width="10" height="10" viewBox="0 0 10 10"><rect x="0" y="2" width="7" height="7" fill="none" stroke="#fff" strokeWidth="1.3"/><line x1="0" y1="4" x2="7" y2="4" stroke="#fff" strokeWidth="1.3"/><polyline points="3,2 3,0 10,0 10,7 7,7" fill="none" stroke="#fff" strokeWidth="1.3"/><line x1="3" y1="2" x2="10" y2="2" stroke="#fff" strokeWidth="1.3"/></svg>,
+  close: <svg width="10" height="10" viewBox="0 0 10 10"><line x1="1" y1="1" x2="9" y2="9" stroke="#fff" strokeWidth="2"/><line x1="9" y1="1" x2="1" y2="9" stroke="#fff" strokeWidth="2"/></svg>,
+}
+
+function TitleButton({ icon, onClick, type }) {
   const [hover, setHover] = useState(false)
   const isClose = type === 'close'
   return (
@@ -249,18 +256,16 @@ function TitleButton({ label, onClick, type }) {
         background: hover
           ? (isClose ? 'var(--xp-btn-close-hover)' : 'linear-gradient(180deg, #5ca0f0, #3070d8)')
           : (isClose ? 'var(--xp-btn-close)' : 'var(--xp-btn-min)'),
-        color: '#fff',
-        fontSize: 10,
         cursor: 'pointer',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
         padding: 0,
         boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.35)',
-        lineHeight: 1,
+        flexShrink: 0,
       }}
     >
-      {label}
+      {BTN_ICONS[icon]}
     </button>
   )
 }

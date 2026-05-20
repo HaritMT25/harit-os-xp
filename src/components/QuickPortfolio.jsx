@@ -4,6 +4,7 @@ import {
   ProfileHeader, SectionHeader, ExperienceEntry, EducationEntry,
   ProjectCard, SkillGroup, ContactRow, PublicationEntry,
 } from '../shared/Components'
+import { XPModeButton, XPBanner } from '../shared/ModeSwitcher'
 
 export default function QuickPortfolio({ onSwitchToXP }) {
   const [activeSection, setActiveSection] = useState('about')
@@ -45,9 +46,7 @@ export default function QuickPortfolio({ onSwitchToXP }) {
               </button>
             ))}
           </div>
-          <button onClick={onSwitchToXP} style={styles.xpButton} title="Try the full XP experience">
-            🖥️ XP Mode
-          </button>
+          <XPModeButton onClick={onSwitchToXP} />
         </div>
       </nav>
 
@@ -151,21 +150,7 @@ export default function QuickPortfolio({ onSwitchToXP }) {
 
         {/* Footer */}
         <footer style={styles.footer}>
-          {window.innerWidth >= 768 && (
-            <div style={styles.xpBanner}>
-              <span style={{ fontSize: 20 }}>🖥️</span>
-              <div>
-                <div style={{ fontWeight: 600, fontSize: 13, color: '#333' }}>Want the full experience?</div>
-                <div style={{ fontSize: 11, color: '#888' }}>Try the interactive Windows XP desktop version</div>
-              </div>
-              <button onClick={onSwitchToXP} style={styles.xpBannerBtn}>Launch XP Mode</button>
-            </div>
-          )}
-          {window.innerWidth < 768 && (
-            <div style={styles.mobileBanner}>
-              💻 Visit on desktop for the full interactive XP experience
-            </div>
-          )}
+          <XPBanner onClick={onSwitchToXP} />
           <p style={styles.footerText}>
             © {new Date().getFullYear()} {personalInfo.name} · Built with React
           </p>
@@ -226,19 +211,6 @@ const styles = {
     fontWeight: 500,
     transition: 'all 0.15s',
   },
-  xpButton: {
-    padding: '6px 14px',
-    border: '1px solid #ddd',
-    borderRadius: 6,
-    background: '#fff',
-    cursor: 'pointer',
-    fontSize: 12,
-    fontFamily: 'inherit',
-    fontWeight: 600,
-    color: '#555',
-    transition: 'all 0.15s',
-  },
-
   // Main
   main: {
     flex: 1,
@@ -346,37 +318,5 @@ const styles = {
     fontSize: 12,
     color: '#999',
     marginTop: 16,
-  },
-  xpBanner: {
-    display: 'flex',
-    alignItems: 'center',
-    gap: 14,
-    padding: '16px 20px',
-    background: '#f0f7ff',
-    border: '1px solid #c0d8f0',
-    borderRadius: 10,
-    textAlign: 'left',
-  },
-  xpBannerBtn: {
-    padding: '8px 18px',
-    border: '1px solid #0078d7',
-    borderRadius: 6,
-    background: '#0078d7',
-    color: '#fff',
-    cursor: 'pointer',
-    fontSize: 12,
-    fontFamily: 'inherit',
-    fontWeight: 600,
-    whiteSpace: 'nowrap',
-    marginLeft: 'auto',
-  },
-  mobileBanner: {
-    padding: '10px 16px',
-    background: '#f8f8f0',
-    border: '1px solid #e0e0d0',
-    borderRadius: 8,
-    fontSize: 12,
-    color: '#888',
-    textAlign: 'center',
   },
 }
