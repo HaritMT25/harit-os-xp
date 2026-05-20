@@ -1,12 +1,14 @@
 import Redis from 'ioredis'
 
-// works with local docker redis (redis://localhost:6379)
-// and upstash/vercel redis in production (redis://...upstash.io:6379)
+// local: redis://localhost:6379
+// upstash: rediss://default:pass@host.upstash.io:6379 (tls)
 function getRedis() {
-  return new Redis(process.env.REDIS_URL || 'redis://localhost:6379', {
+  const url = process.env.REDIS_URL || 'redis://localhost:6379'
+  return new Redis(url, {
     maxRetriesPerRequest: 1,
-    connectTimeout: 3000,
+    connectTimeout: 5000,
     lazyConnect: true,
+    tls: url.startsWith('rediss://') ? {} : undefined,
   })
 }
 

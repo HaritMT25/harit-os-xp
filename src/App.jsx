@@ -96,13 +96,8 @@ const AppWindow = memo(function AppWindow({
   )
 })
 
-// ── Mobile detection ──
-const isMobile = () => window.innerWidth < 768
-
 function getInitialMode() {
-  if (isMobile()) return 'quick'
   const hash = window.location.hash.replace('#', '')
-  // clear hash after reading so refresh goes to landing
   if (hash) window.history.replaceState(null, '', window.location.pathname)
   if (hash === 'quick') return 'quick'
   if (hash === 'xp') return 'booting'

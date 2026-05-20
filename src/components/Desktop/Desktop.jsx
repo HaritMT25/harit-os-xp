@@ -44,41 +44,59 @@ export default function Desktop({ onOpenWindow }) {
     setSelectedIcon(null)
   }, [])
 
-  // icon dragging
-  const startDrag = useCallback((e, id) => {
-    e.preventDefault()
+  const isTouch = 'ontouchstart' in window
+
+  // unified pointer handling — works for mouse and touch
+  const handlePointerDown = useCallback((e, id) => {
     e.stopPropagation()
     setSelectedIcon(id)
     setContextMenu(null)
 
-    const startX = e.clientX - positions[id].x
-    const startY = e.clientY - positions[id].y
+    const clientX = e.touches ? e.touches[0].clientX : e.clientX
+    const clientY = e.touches ? e.touches[0].clientY : e.clientY
+    const startX = clientX - positions[id].x
+    const startY = clientY - positions[id].y
     let moved = false
 
     const handleMove = (ev) => {
-      moved = true
-      setPositions(prev => ({
-        ...prev,
-        [id]: {
-          x: Math.max(0, Math.min(ev.clientX - startX, window.innerWidth - 80)),
-          y: Math.max(0, Math.min(ev.clientY - startY, window.innerHeight - 120)),
-        },
-      }))
+      const cx = ev.touches ? ev.touches[0].clientX : ev.clientX
+      const cy = ev.touches ? ev.touches[0].clientY : ev.clientY
+      const dx = Math.abs(cx - clientX)
+      const dy = Math.abs(cy - clientY)
+      if (dx > 5 || dy > 5) moved = true
+      if (moved) {
+        setPositions(prev => ({
+          ...prev,
+          [id]: {
+            x: Math.max(0, Math.min(cx - startX, window.innerWidth - 80)),
+            y: Math.max(0, Math.min(cy - startY, window.innerHeight - 120)),
+          },
+        }))
+      }
     }
 
     const handleUp = () => {
       document.removeEventListener('mousemove', handleMove)
       document.removeEventListener('mouseup', handleUp)
+      document.removeEventListener('touchmove', handleMove)
+      document.removeEventListener('touchend', handleUp)
+
+      // touch: single tap opens (if didn't drag)
+      // mouse: just select (double-click opens)
+      if (isTouch && !moved) {
+        onOpenWindow(id)
+      }
       dragRef.current = moved ? 'dragged' : null
     }
 
     dragRef.current = null
     document.addEventListener('mousemove', handleMove)
     document.addEventListener('mouseup', handleUp)
-  }, [positions])
+    document.addEventListener('touchmove', handleMove, { passive: false })
+    document.addEventListener('touchend', handleUp)
+  }, [positions, onOpenWindow])
 
   const handleDoubleClick = useCallback((id) => {
-    // don't open if we just finished dragging
     if (dragRef.current === 'dragged') { dragRef.current = null; return }
     onOpenWindow(id)
   }, [onOpenWindow])
@@ -102,7 +120,8 @@ export default function Desktop({ onOpenWindow }) {
       {DESKTOP_ICONS.map((icon) => (
         <div
           key={icon.id}
-          onMouseDown={(e) => startDrag(e, icon.id)}
+          onMouseDown={(e) => handlePointerDown(e, icon.id)}
+          onTouchStart={(e) => handlePointerDown(e, icon.id)}
           onDoubleClick={() => handleDoubleClick(icon.id)}
           style={{
             position: 'absolute',

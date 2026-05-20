@@ -31,26 +31,31 @@ export default function Window({
   const { position, size, maximized, minimized, closing } = windowState
   const meta = WINDOW_TITLES[id] || { title: id, icon: '📋' }
 
-  // Dragging
-  const handleTitleMouseDown = useCallback((e) => {
+  // dragging — mouse + touch
+  const handleTitleDown = useCallback((e) => {
     if (maximized) return
     e.preventDefault()
     onFocus(id)
-    const startX = e.clientX - position.x
-    const startY = e.clientY - position.y
+    const cx = e.touches ? e.touches[0].clientX : e.clientX
+    const cy = e.touches ? e.touches[0].clientY : e.clientY
+    const startX = cx - position.x
+    const startY = cy - position.y
 
     const handleMove = (ev) => {
-      onMove(id, {
-        x: Math.max(0, ev.clientX - startX),
-        y: Math.max(0, ev.clientY - startY),
-      })
+      const mx = ev.touches ? ev.touches[0].clientX : ev.clientX
+      const my = ev.touches ? ev.touches[0].clientY : ev.clientY
+      onMove(id, { x: Math.max(0, mx - startX), y: Math.max(0, my - startY) })
     }
     const handleUp = () => {
       document.removeEventListener('mousemove', handleMove)
       document.removeEventListener('mouseup', handleUp)
+      document.removeEventListener('touchmove', handleMove)
+      document.removeEventListener('touchend', handleUp)
     }
     document.addEventListener('mousemove', handleMove)
     document.addEventListener('mouseup', handleUp)
+    document.addEventListener('touchmove', handleMove, { passive: false })
+    document.addEventListener('touchend', handleUp)
   }, [id, position, maximized, onFocus, onMove])
 
   // Resizing
@@ -124,7 +129,8 @@ export default function Window({
       {/* ---- TITLE BAR ---- */}
       <div
         ref={titleRef}
-        onMouseDown={handleTitleMouseDown}
+        onMouseDown={handleTitleDown}
+        onTouchStart={handleTitleDown}
         onDoubleClick={() => onMaximize(id)}
         style={{
           background: isActive

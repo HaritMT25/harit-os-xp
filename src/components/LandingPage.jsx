@@ -84,6 +84,11 @@ export default function LandingPage({ onChoose }) {
               Interactive Windows XP desktop. Explore apps, browse projects, use the terminal.
             </p>
             <div style={styles.cardMeta}>~5 minutes</div>
+            {typeof window !== 'undefined' && window.innerWidth < 768 && (
+              <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.3)', marginTop: 8 }}>
+                Best on desktop · works on mobile
+              </div>
+            )}
           </div>
         </div>
 
