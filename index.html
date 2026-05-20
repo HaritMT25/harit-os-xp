@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Harit — Software Engineer & ML Researcher</title>
+    <meta name="description" content="Interactive portfolio of Harit — MS CS at Northeastern, building at the intersection of RL robotics, voice/audio ML, and systems programming." />
+    
+    <!-- Open Graph (LinkedIn, Facebook, iMessage) -->
+    <meta property="og:title" content="Harit — Software Engineer & ML Researcher" />
+    <meta property="og:description" content="Interactive Windows XP-themed portfolio. Explore projects, chat with an AI assistant, or play Minesweeper." />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://harit.dev" />
+    
+    <!-- Twitter -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="Harit — Software Engineer & ML Researcher" />
+    <meta name="twitter:description" content="Interactive Windows XP-themed portfolio with an AI assistant that knows everything about my work." />
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='4' fill='%230058e6'/><text x='50%25' y='55%25' dominant-baseline='middle' text-anchor='middle' fill='white' font-family='Tahoma' font-size='18' font-weight='bold'>H</text></svg>" />
+    <style>
+      * { margin: 0; padding: 0; box-sizing: border-box; }
+      html, body, #root { width: 100%; height: 100%; overflow: hidden; }
+      body { font-family: 'Tahoma', 'Segoe UI', Geneva, Verdana, sans-serif; background: #0a0a1a; }
+      #pre-loader { display: flex; align-items: center; justify-content: center; height: 100%; }
+      #pre-loader .dot { width: 10px; height: 10px; border-radius: 50%; background: #4fc3f7; margin: 0 3px; animation: plPulse 1.2s ease-in-out infinite; }
+      #pre-loader .dot:nth-child(2) { animation-delay: 0.3s; }
+      #pre-loader .dot:nth-child(3) { animation-delay: 0.6s; }
+      @keyframes plPulse { 0%, 80%, 100% { opacity: 0.3; transform: scale(0.8); } 40% { opacity: 1; transform: scale(1.2); } }
+    </style>
+  </head>
+  <body>
+    <div id="root">
+      <div id="pre-loader"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div>
+    </div>
+    <script type="module" src="/src/main.jsx"></script>
+  </body>
+</html>

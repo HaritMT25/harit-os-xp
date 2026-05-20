@@ -1,0 +1,149 @@
+/* Boot animations */
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes fadeOut {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes slideUp {
+  from { transform: translateY(20px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+@keyframes blink {
+  50% { opacity: 0; }
+}
+
+@keyframes bootProgress {
+  0% { width: 0%; }
+  100% { width: 100%; }
+}
+
+@keyframes bootDots {
+  0%, 20% { opacity: 0.3; transform: scale(0.7); }
+  50% { opacity: 1; transform: scale(1.1); }
+  80%, 100% { opacity: 0.3; transform: scale(0.7); }
+}
+
+@keyframes windowOpen {
+  from {
+    transform: scale(0.85);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+@keyframes windowClose {
+  from {
+    transform: scale(1);
+    opacity: 1;
+  }
+  to {
+    transform: scale(0.85);
+    opacity: 0;
+  }
+}
+
+@keyframes windowMinimize {
+  from {
+    transform: scale(1) translateY(0);
+    opacity: 1;
+  }
+  to {
+    transform: scale(0.3) translateY(200px);
+    opacity: 0;
+  }
+}
+
+@keyframes startMenuSlide {
+  from {
+    transform: translateY(10px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+@keyframes welcomeFade {
+  0% { opacity: 0; }
+  20% { opacity: 1; }
+  80% { opacity: 1; }
+  100% { opacity: 0; }
+}
+
+@keyframes scanline {
+  0% { background-position: 0 0; }
+  100% { background-position: 0 4px; }
+}
+
+@keyframes desktopFadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes pulse {
+  0%, 80%, 100% { opacity: 0.3; transform: scale(0.8); }
+  40% { opacity: 1; transform: scale(1.2); }
+}
+
+/* Context menu */
+@keyframes menuPop {
+  from {
+    transform: scale(0.95);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+/* Clippy */
+@keyframes clippyBounce {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-4px); }
+}
+
+@keyframes clippyLook {
+  0%, 40% { transform: translateX(0); }
+  50% { transform: translateX(2px); }
+  70% { transform: translateX(-1px); }
+  100% { transform: translateX(0); }
+}
+
+/* MSN Messenger popup */
+@keyframes msnSlideUp {
+  from { transform: translateY(100%); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+@keyframes msnSlideDown {
+  from { transform: translateY(0); opacity: 1; }
+  to { transform: translateY(100%); opacity: 0; }
+}
+
+/* Boot spinner */
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* IE loading bar */
+@keyframes ieLoading {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(400%); }
+}
+
+/* AI typing indicator */
+@keyframes typingPulse {
+  0%, 80%, 100% { opacity: 0.3; transform: scale(0.8); }
+  40% { opacity: 1; transform: scale(1); }
+}

@@ -1,0 +1,23 @@
+@media print {
+  /* Hide everything except the resume page */
+  body * {
+    visibility: hidden;
+  }
+  .resume-print-page,
+  .resume-print-page * {
+    visibility: visible !important;
+  }
+  .resume-print-page {
+    position: fixed;
+    left: 0;
+    top: 0;
+    width: 100%;
+    background: #fff !important;
+    box-shadow: none !important;
+    padding: 24px 36px !important;
+  }
+  /* Hide toolbar, status bar */
+  .resume-no-print {
+    display: none !important;
+  }
+}

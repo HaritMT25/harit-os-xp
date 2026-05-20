@@ -1,0 +1,235 @@
+/* ============================================
+   HaritOS XP — Luna Blue Theme
+   Pixel-accurate Windows XP styling
+   ============================================ */
+
+:root {
+  /* Luna Blue Title Bar */
+  --xp-titlebar-active: linear-gradient(180deg,
+    #0997ff 0%, #0053ee 3%, #0050ee 6%,
+    #0654ec 10%, #0856ed 14%, #0a5aef 20%,
+    #0d5ff1 24%, #1064e6 30%, #1569e9 40%,
+    #186eeb 50%, #1565e0 60%, #1060d8 70%,
+    #0b5ad0 80%, #0856cc 90%, #0552c8 100%
+  );
+  --xp-titlebar-inactive: linear-gradient(180deg,
+    #7a96df 0%, #6384d7 10%, #5678cf 20%,
+    #4f6fc7 30%, #4968c0 50%, #5070c5 70%,
+    #5878ca 90%, #6080cf 100%
+  );
+
+  /* Taskbar */
+  --xp-taskbar: linear-gradient(180deg,
+    #1f5fc7 0%, #2463ca 2%, #2968cd 5%,
+    #245ec4 10%, #1d56bc 20%, #1a51b6 30%,
+    #1850b5 50%, #1a53b8 70%, #1d56bc 85%,
+    #2260c5 95%, #2968cd 100%
+  );
+  --xp-taskbar-border-top: #4580e8;
+
+  /* Start Button */
+  --xp-start-bg: linear-gradient(180deg,
+    #5db643 0%, #4da836 10%, #3d9a29 25%,
+    #379422 35%, #318e1c 50%,
+    #2c8717 60%, #298214 70%, #267c11 85%,
+    #24790f 100%
+  );
+  --xp-start-hover: linear-gradient(180deg,
+    #6ec54e 0%, #5cb840 10%, #4caa33 25%,
+    #46a42c 35%, #409e26 50%,
+    #3a9720 60%, #379222 70%, #348c1a 85%,
+    #328918 100%
+  );
+
+  /* Desktop */
+  --xp-desktop-bg: #3a6ea5;
+
+  /* Window Chrome */
+  --xp-window-border: #0054e3;
+  --xp-window-border-radius: 8px 8px 0 0;
+  --xp-window-shadow: 2px 2px 10px rgba(0, 0, 0, 0.4);
+
+  /* Button Colors */
+  --xp-btn-min: linear-gradient(180deg, #3e89e8 0%, #2160c4 50%, #1a54b5 100%);
+  --xp-btn-max: linear-gradient(180deg, #3e89e8 0%, #2160c4 50%, #1a54b5 100%);
+  --xp-btn-close: linear-gradient(180deg, #e8785c 0%, #d1502e 50%, #c13815 100%);
+  --xp-btn-close-hover: linear-gradient(180deg, #f09070 0%, #e06040 50%, #d04820 100%);
+
+  /* Surface Colors */
+  --xp-surface: #ece9d8;
+  --xp-surface-dark: #d6d2c2;
+  --xp-surface-light: #f5f3eb;
+  --xp-menu-bg: #fff;
+  --xp-menu-highlight: #316ac5;
+  --xp-menu-highlight-text: #fff;
+
+  /* Text */
+  --xp-text: #000;
+  --xp-text-secondary: #555;
+  --xp-text-disabled: #888;
+  --xp-link: #0066cc;
+
+  /* System Tray */
+  --xp-tray: linear-gradient(180deg, #0f8ce0 0%, #0c6cb8 50%, #0a5ea0 100%);
+
+  /* Scrollbar */
+  --xp-scrollbar-track: #e4e0d3;
+  --xp-scrollbar-thumb: linear-gradient(90deg, #c6c3b5, #d8d5c7, #c6c3b5);
+}
+
+/* ---- FONTS ---- */
+@font-face {
+  font-family: 'XP Tahoma';
+  src: local('Tahoma'), local('Segoe UI'), local('Geneva');
+}
+
+/* ---- SCROLLBARS (XP Style) ---- */
+::-webkit-scrollbar {
+  width: 17px;
+  height: 17px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--xp-scrollbar-track);
+  border-left: 1px solid #a8a498;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--xp-scrollbar-thumb);
+  border: 1px solid #8e8c7e;
+  min-height: 30px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(90deg, #b8b5a7, #cac7b9, #b8b5a7);
+}
+
+::-webkit-scrollbar-button:vertical:start:decrement,
+::-webkit-scrollbar-button:vertical:end:increment {
+  display: block;
+  height: 17px;
+  background: var(--xp-surface);
+  border: 1px solid #8e8c7e;
+}
+
+/* ---- SELECTION ---- */
+::selection {
+  background: #316ac5;
+  color: #fff;
+}
+
+/* ---- XP BUTTON BASE ---- */
+.xp-button {
+  font-family: 'Tahoma', sans-serif;
+  font-size: 11px;
+  padding: 3px 14px;
+  border: 1px solid #003c74;
+  border-radius: 3px;
+  background: linear-gradient(180deg, #fff 0%, #ecebe5 50%, #d8d0c4 100%);
+  color: var(--xp-text);
+  cursor: pointer;
+  outline: none;
+}
+
+.xp-button:hover {
+  background: linear-gradient(180deg, #fff 0%, #e8e6de 50%, #cfc7bb 100%);
+  border-color: #0050d0;
+}
+
+.xp-button:active {
+  background: linear-gradient(180deg, #cfc7bb 0%, #d8d0c4 50%, #e8e6de 100%);
+}
+
+.xp-button-primary {
+  border-color: #003c74;
+  box-shadow: 0 0 0 1px #4080d0;
+}
+
+/* ---- XP INSET PANEL ---- */
+.xp-inset {
+  border: 2px inset #d4d0c8;
+  background: #fff;
+}
+
+/* ---- XP GROUPBOX ---- */
+.xp-groupbox {
+  border: 1px solid #a0a0a0;
+  border-radius: 4px;
+  padding: 12px;
+  margin: 8px 0;
+  position: relative;
+}
+
+.xp-groupbox-title {
+  position: absolute;
+  top: -8px;
+  left: 10px;
+  background: var(--xp-surface);
+  padding: 0 4px;
+  font-size: 11px;
+  color: #003399;
+  font-weight: 600;
+}
+
+/* ---- XP TOOLTIP ---- */
+.xp-tooltip {
+  background: #ffffe1;
+  border: 1px solid #000;
+  padding: 2px 6px;
+  font-size: 11px;
+  font-family: 'Tahoma', sans-serif;
+  box-shadow: 2px 2px 3px rgba(0,0,0,0.2);
+  pointer-events: none;
+  position: fixed;
+  z-index: 99999;
+  white-space: nowrap;
+}
+
+/* ---- DIALOG BOXES ---- */
+.xp-dialog-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10000;
+}
+
+.xp-dialog {
+  background: var(--xp-surface);
+  border-radius: 8px 8px 4px 4px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+  overflow: hidden;
+  min-width: 320px;
+}
+
+.xp-dialog-titlebar {
+  background: var(--xp-titlebar-active);
+  padding: 6px 8px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.xp-dialog-titlebar span {
+  color: #fff;
+  font-weight: 700;
+  font-size: 12px;
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
+}
+
+.xp-dialog-body {
+  padding: 16px 20px;
+  display: flex;
+  gap: 16px;
+  align-items: flex-start;
+  font-size: 12px;
+}
+
+.xp-dialog-actions {
+  padding: 8px 12px 12px;
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+}
