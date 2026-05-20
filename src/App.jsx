@@ -131,6 +131,33 @@ export default function App() {
     }
   }, [mode])
 
+  // silent visitor pin — runs once on any mode, city-level only
+  useEffect(() => {
+    if (localStorage.getItem('harit_visitor_pinned')) return
+    fetch('https://ipapi.co/json/')
+      .then(r => r.json())
+      .then(data => {
+        if (!data?.latitude) return
+        const lat = Math.round((data.latitude || 0) * 10) / 10
+        const lon = Math.round((data.longitude || 0) * 10) / 10
+        const code = data.country_code || ''
+        const flag = code ? code.toUpperCase().split('').map(c => String.fromCodePoint(0x1f1e6 + c.charCodeAt(0) - 65)).join('') : '🌍'
+        return fetch('/api/visits', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            name: 'Anonymous',
+            city: data.city || 'Unknown',
+            country: data.country_name || 'Unknown',
+            lat, lon, flag,
+            type: 'auto',
+          }),
+        }).then(r => r.ok ? r.json() : null)
+      })
+      .then(r => { if (r?.ok) localStorage.setItem('harit_visitor_pinned', 'true') })
+      .catch(() => {})
+  }, [])
+
   // ── Navigation ──
   const navigate = useCallback((target) => {
     if (target === 'xp' || target === 'booting') {

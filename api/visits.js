@@ -24,7 +24,7 @@ export default async function handler(req, res) {
     await redis.connect()
 
     if (req.method === 'POST') {
-      const { name, city, country, lat, lon, flag } = req.body || {}
+      const { name, city, country, lat, lon, flag, type } = req.body || {}
       const visit = {
         name: (name || '').trim() || 'Anonymous',
         city: city || 'Unknown',
@@ -32,6 +32,7 @@ export default async function handler(req, res) {
         lat: parseFloat(lat) || 0,
         lon: parseFloat(lon) || 0,
         flag: flag || '🌍',
+        type: type || 'auto',
         ts: Date.now(),
       }
       await redis.lpush('harit:visits', JSON.stringify(visit))
