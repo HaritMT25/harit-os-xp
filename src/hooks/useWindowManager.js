@@ -20,7 +20,7 @@ const WINDOW_SIZES = {
   skills:   { w: 500, h: 440 },
   contact:  { w: 460, h: 380 },
   terminal: { w: 580, h: 400 },
-  ie:       { w: 750, h: 550 },
+  ie:       { w: 880, h: 620 },
   notepad:  { w: 480, h: 400 },
   minesweeper: { w: 300, h: 380 },
   ai:       { w: 420, h: 500 },
