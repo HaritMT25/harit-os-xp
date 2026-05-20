@@ -4,9 +4,9 @@ import { useState } from 'react'
 const BOOKMARKS = [
   {
     name: '🤖 Agentic AI Website',
-    url: '',
+    url: 'https://genui-hackathon.vercel.app/',
     description: 'Interactive agentic AI demo',
-    ready: false,
+    ready: true,
   },
   {
     name: '🕉️ SriDarshan',
