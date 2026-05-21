@@ -1,5 +1,5 @@
 import { skills } from '../data/resume-data'
-import { SkillGroup } from '../shared/Components'
+import { SkillGroup } from '../shared'
 
 export default function SkillsPanel() {
   return (

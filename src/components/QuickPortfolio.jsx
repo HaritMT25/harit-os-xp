@@ -3,7 +3,7 @@ import { personalInfo, education, experience, projects, skills, publications } f
 import {
   ProfileHeader, SectionHeader, ExperienceEntry, EducationEntry,
   ProjectCard, SkillGroup, ContactRow, PublicationEntry,
-} from '../shared/Components'
+} from '../shared'
 import { XPModeButton, XPBanner } from '../shared/ModeSwitcher'
 
 export default function QuickPortfolio({ onSwitchToXP }) {

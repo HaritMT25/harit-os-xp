@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { personalInfo } from '../data/resume-data'
-import { ContactRow } from '../shared/Components'
+import { ContactRow } from '../shared'
 
 export default function ContactOutlook() {
   const [name, setName] = useState('')

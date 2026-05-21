@@ -1,6 +1,6 @@
 import { personalInfo, education } from '../data/resume-data'
 import { openWindow } from '../hooks/eventBus'
-import { ProfileHeader, SectionHeader, EducationEntry, SkillBadge } from '../shared/Components'
+import { ProfileHeader, SectionHeader, EducationEntry, SkillBadge } from '../shared'
 
 export default function AboutMe() {
   return (
