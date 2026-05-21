@@ -173,9 +173,9 @@ export const skills = {
 
 export const publications = [
   {
-    title: 'Authorship Verification — PAN2020',
-    authors: 'Harit et al.',
-    venue: 'PAN@CLEF 2020',
-    description: 'Achieved 82.55% accuracy, 3rd place on the PAN2020 leaderboard for cross-domain authorship verification.',
+    title: 'Deep Learning Approach for Weather Classification Using Pre-Trained Convolutional Neural Networks',
+    authors: 'Harit Tarwani, Shivang Patel, Parth Goel',
+    venue: 'Procedia Computer Science, Vol. 252, pp. 136–145, 2025',
+    description: 'Implemented transfer learning on CNN models (ResNet50V2, EfficientNetB5, EfficientNetV2S) for automated weather classification across 11 categories.',
   },
 ]
