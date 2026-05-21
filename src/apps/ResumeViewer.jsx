@@ -106,8 +106,13 @@ const styles = {
   },
   pageContainer: { flex: 1, overflow: 'auto', display: 'flex', justifyContent: 'center', padding: '20px 10px' },
   page: {
-    width: 540, minHeight: 700, background: '#fff', boxShadow: '0 2px 12px rgba(0,0,0,0.4)',
-    padding: '36px 44px', flexShrink: 0,
+    width: 540, 
+    minHeight: 700, 
+    height: 'max-content', // <-- Add this line
+    background: '#fff', 
+    boxShadow: '0 2px 12px rgba(0,0,0,0.4)',
+    padding: '36px 44px', 
+    flexShrink: 0,
   },
 
   // header
