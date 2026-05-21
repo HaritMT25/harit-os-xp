@@ -2,6 +2,7 @@ import { useState, useCallback, useEffect, lazy, Suspense, memo } from 'react'
 import { useWindowManager } from './hooks/useWindowManager'
 import { useSounds } from './hooks/useSounds'
 import { on } from './hooks/eventBus'
+import { clearTheme } from './data/themes'
 import ErrorBoundary from './components/ErrorBoundary'
 
 // ── Eager loads (needed immediately) ──
@@ -170,8 +171,7 @@ export default function App() {
   }, [play])
 
   const handleShutdownComplete = useCallback(() => {
-    document.documentElement.removeAttribute('data-theme')
-    document.documentElement.removeAttribute('style')
+    clearTheme()
     setMode('landing')
   }, [])
 

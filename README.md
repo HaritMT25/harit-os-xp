@@ -133,7 +133,7 @@ This project is a work of parody intended for educational and portfolio purposes
 
 The visual design language of Windows XP, including the Luna theme, is the intellectual property of **Microsoft Corporation**. This project uses no actual Microsoft assets — all visuals are original CSS approximations. No ownership of Microsoft's design language is claimed.
 
-The concept of an OS-themed portfolio is a well-established genre in web development. This project was inspired by the broader community. All code is original.
+The concept of an OS-themed portfolio is a well-established genre in web development. This project was directly inspired by [Mitch Ivin's XP portfolio](https://mitchivin.com/). All code is original.
 
 ## License
 
