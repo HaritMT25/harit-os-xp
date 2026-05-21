@@ -124,6 +124,7 @@ export default function Window({
           ? '0 4px 20px rgba(0,0,0,0.4), inset 0 0 0 1px rgba(255,255,255,0.1)'
           : '0 2px 10px rgba(0,0,0,0.3)',
         overflow: 'hidden',
+        background: 'var(--xp-surface)',
         border: `1px solid ${isActive ? '#0050d0' : '#6878a0'}`,
         animation: anim !== 'none' ? `${anim} 0.15s ease-out forwards` : undefined,
         userSelect: 'none',
@@ -191,11 +192,11 @@ export default function Window({
         flex: 1,
         overflow: 'hidden',
         background: '#fff',
-        borderLeft: '1px solid #c0beb5',
-        borderRight: '1px solid #f0efe8',
-        borderTop: '1px solid #c0beb5',
-        borderBottom: '1px solid #f0efe8',
-        margin: '0 2px',
+        borderLeft: '1px solid #a0a0a0',
+        borderRight: '1px solid #a0a0a0',
+        borderTop: '1px solid #a0a0a0',
+        borderBottom: '1px solid #a0a0a0',
+        margin: '0 3px',
       }}>
         {children}
       </div>
