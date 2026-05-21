@@ -1,5 +1,6 @@
 import { useRef, useCallback, useState, useEffect } from 'react'
 import { getWindowTitle } from '../../data/app-registry'
+import { startDrag } from '../../hooks/startDrag'
 
 export default function Window({
   id, windowState, zIndex, isActive,
@@ -21,72 +22,61 @@ export default function Window({
   // dragging — mouse + touch
   const handleTitleDown = useCallback((e) => {
     if (maximized) return
-    // Don't start drag if the touch/click was on a window button
-    const target = e.target
-    if (target.closest('button')) return
+    if (e.target.closest('button')) return
     e.preventDefault()
     onFocus(id)
-    const cx = e.touches ? e.touches[0].clientX : e.clientX
-    const cy = e.touches ? e.touches[0].clientY : e.clientY
-    const startX = cx - position.x
-    const startY = cy - position.y
 
-    const handleMove = (ev) => {
-      const mx = ev.touches ? ev.touches[0].clientX : ev.clientX
-      const my = ev.touches ? ev.touches[0].clientY : ev.clientY
-      onMove(id, { x: Math.max(0, mx - startX), y: Math.max(0, my - startY) })
-    }
-    const handleUp = () => {
-      document.removeEventListener('mousemove', handleMove)
-      document.removeEventListener('mouseup', handleUp)
-      document.removeEventListener('touchmove', handleMove)
-      document.removeEventListener('touchend', handleUp)
-    }
-    document.addEventListener('mousemove', handleMove)
-    document.addEventListener('mouseup', handleUp)
-    document.addEventListener('touchmove', handleMove, { passive: false })
-    document.addEventListener('touchend', handleUp)
-  }, [id, position, maximized, onFocus, onMove])
+    const offsetX = (e.touches ? e.touches[0].clientX : e.clientX) - position.x
+    const offsetY = (e.touches ? e.touches[0].clientY : e.clientY) - position.y
 
-  // Resizing
+    startDrag(e, {
+      onMove(x, y) {
+        const minVisible = 120 // px of title bar that must stay on screen horizontally
+        onMove(id, {
+          x: Math.max(-(size.w - minVisible), Math.min(x - offsetX, window.innerWidth - minVisible)),
+          y: Math.max(0, Math.min(y - offsetY, window.innerHeight - 68)),
+        })
+      },
+    })
+  }, [id, position, size, maximized, onFocus, onMove])
+
+  // Resizing (mouse only)
   const handleResizeMouseDown = useCallback((e, direction) => {
     if (maximized) return
     e.preventDefault()
     e.stopPropagation()
     onFocus(id)
 
-    const startX = e.clientX
-    const startY = e.clientY
     const startW = size.w
     const startH = size.h
     const startPosX = position.x
     const startPosY = position.y
 
-    const handleMove = (ev) => {
-      const dx = ev.clientX - startX
-      const dy = ev.clientY - startY
-      let newW = startW, newH = startH, newX = startPosX, newY = startPosY
+    startDrag(e, {
+      touch: false,
+      onMove(x, y, startX, startY) {
+        const dx = x - startX
+        const dy = y - startY
+        let newW = startW, newH = startH, newX = startPosX, newY = startPosY
 
-      if (direction.includes('e')) newW = Math.max(300, startW + dx)
-      if (direction.includes('s')) newH = Math.max(200, startH + dy)
-      if (direction.includes('w')) {
-        newW = Math.max(300, startW - dx)
-        newX = startPosX + (startW - newW)
-      }
-      if (direction.includes('n')) {
-        newH = Math.max(200, startH - dy)
-        newY = startPosY + (startH - newH)
-      }
+        if (direction.includes('e')) newW = Math.max(300, startW + dx)
+        if (direction.includes('s')) newH = Math.max(200, startH + dy)
+        if (direction.includes('w')) {
+          newW = Math.max(300, startW - dx)
+          newX = startPosX + (startW - newW)
+        }
+        if (direction.includes('n')) {
+          newH = Math.max(200, startH - dy)
+          newY = startPosY + (startH - newH)
+        }
 
-      onResize(id, { w: newW, h: newH })
-      onMove(id, { x: newX, y: newY })
-    }
-    const handleUp = () => {
-      document.removeEventListener('mousemove', handleMove)
-      document.removeEventListener('mouseup', handleUp)
-    }
-    document.addEventListener('mousemove', handleMove)
-    document.addEventListener('mouseup', handleUp)
+        onResize(id, { w: newW, h: newH })
+        onMove(id, {
+          x: Math.max(0, newX),
+          y: Math.max(0, newY),
+        })
+      },
+    })
   }, [id, size, position, maximized, onFocus, onResize, onMove])
 
   if (minimized) return null

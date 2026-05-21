@@ -1,5 +1,6 @@
 import { useState, useCallback, useRef } from 'react'
 import { DESKTOP_APPS } from '../../data/app-registry'
+import { startDrag } from '../../hooks/startDrag'
 
 // Build icon config from registry
 const DESKTOP_ICONS = DESKTOP_APPS.map(app => ({
@@ -45,48 +46,27 @@ export default function Desktop({ onOpenWindow }) {
     setSelectedIcon(id)
     setContextMenu(null)
 
-    const clientX = e.touches ? e.touches[0].clientX : e.clientX
-    const clientY = e.touches ? e.touches[0].clientY : e.clientY
-    const startX = clientX - positions[id].x
-    const startY = clientY - positions[id].y
-    let moved = false
+    const pos = positions[id]
+    const offsetX = (e.touches ? e.touches[0].clientX : e.clientX) - pos.x
+    const offsetY = (e.touches ? e.touches[0].clientY : e.clientY) - pos.y
 
-    const handleMove = (ev) => {
-      const cx = ev.touches ? ev.touches[0].clientX : ev.clientX
-      const cy = ev.touches ? ev.touches[0].clientY : ev.clientY
-      const dx = Math.abs(cx - clientX)
-      const dy = Math.abs(cy - clientY)
-      if (dx > 5 || dy > 5) moved = true
-      if (moved) {
+    dragRef.current = null
+    startDrag(e, {
+      threshold: 5,
+      onMove(x, y) {
         setPositions(prev => ({
           ...prev,
           [id]: {
-            x: Math.max(0, Math.min(cx - startX, window.innerWidth - 80)),
-            y: Math.max(0, Math.min(cy - startY, window.innerHeight - 120)),
+            x: Math.max(0, Math.min(x - offsetX, window.innerWidth - 80)),
+            y: Math.max(0, Math.min(y - offsetY, window.innerHeight - 120)),
           },
         }))
-      }
-    }
-
-    const handleUp = () => {
-      document.removeEventListener('mousemove', handleMove)
-      document.removeEventListener('mouseup', handleUp)
-      document.removeEventListener('touchmove', handleMove)
-      document.removeEventListener('touchend', handleUp)
-
-      // touch: single tap opens (if didn't drag)
-      // mouse: just select (double-click opens)
-      if (isTouch && !moved) {
-        onOpenWindow(id)
-      }
-      dragRef.current = moved ? 'dragged' : null
-    }
-
-    dragRef.current = null
-    document.addEventListener('mousemove', handleMove)
-    document.addEventListener('mouseup', handleUp)
-    document.addEventListener('touchmove', handleMove, { passive: false })
-    document.addEventListener('touchend', handleUp)
+      },
+      onEnd({ moved }) {
+        if (isTouch && !moved) onOpenWindow(id)
+        dragRef.current = moved ? 'dragged' : null
+      },
+    })
   }, [positions, onOpenWindow])
 
   const handleDoubleClick = useCallback((id) => {
