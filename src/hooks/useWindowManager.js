@@ -33,6 +33,7 @@ export function useWindowManager() {
   const [windowOrder, setWindowOrder] = useState([])
 
   const openWindow = useCallback((id) => {
+    const isMobile = window.innerWidth < 768
     setWindows(prev => {
       if (prev[id]) {
         // Already open — just unminimize and focus
@@ -41,16 +42,19 @@ export function useWindowManager() {
           [id]: { ...prev[id], minimized: false },
         }
       }
-      // New window
+      // New window — auto-maximize on mobile
+      const defaultSize = { ...WINDOW_SIZES[id] }
+      const defaultPos = { ...INITIAL_POSITIONS[id] }
       return {
         ...prev,
         [id]: {
           id,
-          position: { ...INITIAL_POSITIONS[id] },
-          size: { ...WINDOW_SIZES[id] },
+          position: isMobile ? { x: 0, y: 0 } : defaultPos,
+          size: isMobile ? { w: window.innerWidth, h: window.innerHeight - 38 } : defaultSize,
           minimized: false,
-          maximized: false,
+          maximized: isMobile,
           closing: false,
+          ...(isMobile && { prevPosition: defaultPos, prevSize: defaultSize }),
         },
       }
     })

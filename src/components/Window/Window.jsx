@@ -34,6 +34,9 @@ export default function Window({
   // dragging — mouse + touch
   const handleTitleDown = useCallback((e) => {
     if (maximized) return
+    // Don't start drag if the touch/click was on a window button
+    const target = e.target
+    if (target.closest('button')) return
     e.preventDefault()
     onFocus(id)
     const cx = e.touches ? e.touches[0].clientX : e.clientX
@@ -188,10 +191,10 @@ export default function Window({
         flex: 1,
         overflow: 'hidden',
         background: '#fff',
-        borderLeft: '2px solid #8e8f8a',
-        borderRight: '2px solid #fff',
-        borderTop: '2px solid #8e8f8a',
-        borderBottom: '2px solid #fff',
+        borderLeft: '1px solid #c0beb5',
+        borderRight: '1px solid #f0efe8',
+        borderTop: '1px solid #c0beb5',
+        borderBottom: '1px solid #f0efe8',
         margin: '0 2px',
       }}>
         {children}
@@ -246,6 +249,7 @@ function TitleButton({ icon, onClick, type }) {
   return (
     <button
       onClick={(e) => { e.stopPropagation(); onClick() }}
+      onTouchEnd={(e) => { e.stopPropagation(); e.preventDefault(); onClick() }}
       onMouseEnter={() => setHover(true)}
       onMouseLeave={() => setHover(false)}
       style={{
