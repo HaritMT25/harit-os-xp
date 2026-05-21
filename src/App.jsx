@@ -1,5 +1,7 @@
-import { useState, useCallback, useEffect, lazy, Suspense, memo } from 'react'
+import { useCallback, useEffect, lazy, Suspense, memo } from 'react'
 import { useWindowManager } from './hooks/useWindowManager'
+import { useAppMode } from './hooks/useAppMode'
+import { useVisitorTracking } from './hooks/useVisitorTracking'
 import { useSounds } from './hooks/useSounds'
 import { on } from './hooks/eventBus'
 import { clearTheme } from './data/themes'
@@ -85,18 +87,9 @@ const AppWindow = memo(function AppWindow({
   )
 })
 
-function getInitialMode() {
-  const hash = window.location.hash.replace('#', '')
-  if (hash) window.history.replaceState(null, '', window.location.pathname)
-  if (hash === 'quick') return 'quick'
-  if (hash === 'xp') return 'booting'
-  return 'landing'
-}
-
 // ── Main App ──
 export default function App() {
-  const [mode, setMode] = useState(getInitialMode)
-  const [showWelcome, setShowWelcome] = useState(true)
+  const { mode, setMode, showWelcome, setShowWelcome, navigate } = useAppMode()
   const { play } = useSounds()
 
   const {
@@ -107,60 +100,9 @@ export default function App() {
     taskbarClick, getZIndex, isTopWindow,
   } = useWindowManager()
 
-  // Prefetch XP chunk while user is on landing page
-  useEffect(() => {
-    if (mode === 'landing') {
-      const timer = setTimeout(() => {
-        import('./components/Boot/BootSequence')
-        import('./components/Desktop/Desktop')
-        import('./components/Window/Window')
-        import('./components/Taskbar/Taskbar')
-      }, 2000)
-      return () => clearTimeout(timer)
-    }
-  }, [mode])
+  useVisitorTracking()
 
-  // silent visitor pin — runs once per browser, city-level only
-  useEffect(() => {
-    if (localStorage.getItem('harit_visitor_pinned')) return
-    // set flag IMMEDIATELY to prevent double-fire (React StrictMode, fast refresh, etc.)
-    localStorage.setItem('harit_visitor_pinned', 'true')
-
-    fetch('https://ipapi.co/json/')
-      .then(r => r.json())
-      .then(data => {
-        if (!data?.latitude) return
-        const lat = Math.round((data.latitude || 0) * 10) / 10
-        const lon = Math.round((data.longitude || 0) * 10) / 10
-        const code = data.country_code || ''
-        const flag = code ? code.toUpperCase().split('').map(c => String.fromCodePoint(0x1f1e6 + c.charCodeAt(0) - 65)).join('') : '🌍'
-        fetch('/api/visits', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            name: 'Anonymous',
-            city: data.city || 'Unknown',
-            country: data.country_name || 'Unknown',
-            lat, lon, flag,
-            type: 'auto',
-          }),
-        }).catch(() => {})
-      })
-      .catch(() => {})
-  }, [])
-
-  // ── Navigation ──
-  const navigate = useCallback((target) => {
-    if (target === 'xp' || target === 'booting') {
-      setMode('booting')
-      setShowWelcome(true)
-    } else if (target === 'shutdown') {
-      setMode('shutting-down')
-    } else {
-      setMode(target)
-    }
-  }, [])
-
+  // ── Mode callbacks ──
   const handleChoose = useCallback((choice) => {
     navigate(choice === 'quick' ? 'quick' : 'booting')
   }, [navigate])
@@ -168,12 +110,12 @@ export default function App() {
   const handleBootComplete = useCallback(() => {
     setMode('xp')
     play('startup')
-  }, [play])
+  }, [setMode, play])
 
   const handleShutdownComplete = useCallback(() => {
     clearTheme()
     setMode('landing')
-  }, [])
+  }, [setMode])
 
   // ── Window actions ──
   const handleOpenWindow = useCallback((id) => {
