@@ -1,31 +1,11 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
-
-const START_MENU_ITEMS = [
-  { id: 'about',    label: 'About Me',     icon: '👤', desc: 'View my profile' },
-  { id: 'resume',   label: 'My Resume',    icon: '📄', desc: 'Experience & education' },
-  { id: 'projects', label: 'My Projects',  icon: '📁', desc: 'Portfolio of work' },
-  { id: 'skills',   label: 'Skills',       icon: '⚙️', desc: 'Technologies I use' },
-  { id: 'contact',  label: 'Contact Me',   icon: '✉️', desc: 'Get in touch' },
-  { id: 'ai',       label: 'HaritBot',     icon: '🤖', desc: 'AI assistant (ask me anything)' },
-  { id: 'terminal', label: 'Command Prompt', icon: '💻', desc: 'System terminal' },
-  { id: 'ie',       label: 'Internet Explorer', icon: '🌐', desc: 'Live project demos' },
-]
+import APP_REGISTRY, { START_MENU_APPS } from '../../data/app-registry'
 
 const QUICK_LINKS = [
   { label: 'My Documents', icon: '📂' },
   { label: 'My Pictures', icon: '🖼️' },
   { label: 'My Music', icon: '🎵' },
 ]
-
-const WINDOW_TAB_ICONS = {
-  about: '👤', resume: '📄', projects: '📁',
-  skills: '⚙️', contact: '✉️', terminal: '💻', ie: '🌐', notepad: '📝', minesweeper: '💣', ai: '🤖', visitor: '🌍',
-}
-
-const WINDOW_TAB_LABELS = {
-  about: 'About Me', resume: 'My Resume', projects: 'My Projects',
-  skills: 'Skills', contact: 'Contact Me', terminal: 'Terminal', ie: 'Internet Explorer', notepad: 'Notepad', minesweeper: 'Minesweeper', ai: 'HaritBot', visitor: 'Visitor Map',
-}
 
 export default function Taskbar({ windows, windowOrder, onOpenWindow, onTaskbarClick, onNavigate }) {
   const [startOpen, setStartOpen] = useState(false)
@@ -74,12 +54,12 @@ export default function Taskbar({ windows, windowOrder, onOpenWindow, onTaskbarC
           <div style={styles.startBody}>
             {/* Left column - Programs */}
             <div style={styles.startLeft}>
-              {START_MENU_ITEMS.map((item) => (
+              {START_MENU_APPS.map((app) => (
                 <StartMenuItem
-                  key={item.id}
-                  item={item}
+                  key={app.id}
+                  item={{ ...app, label: app.startMenuLabel || app.label }}
                   onClick={() => {
-                    onOpenWindow(item.id)
+                    onOpenWindow(app.id)
                     setStartOpen(false)
                   }}
                 />
@@ -186,8 +166,8 @@ export default function Taskbar({ windows, windowOrder, onOpenWindow, onTaskbarC
                     : 'inset 0 1px 0 rgba(255,255,255,0.2)',
                 }}
               >
-                <span style={{ fontSize: 12 }}>{WINDOW_TAB_ICONS[id]}</span>
-                <span style={styles.tabLabel}>{WINDOW_TAB_LABELS[id]}</span>
+                <span style={{ fontSize: 12 }}>{APP_REGISTRY[id]?.icon}</span>
+                <span style={styles.tabLabel}>{APP_REGISTRY[id]?.label}</span>
               </button>
             )
           })}

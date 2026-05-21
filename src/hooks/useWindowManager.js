@@ -1,31 +1,5 @@
 import { useState, useCallback } from 'react'
-
-const INITIAL_POSITIONS = {
-  about:    { x: 80,  y: 50 },
-  resume:   { x: 120, y: 70 },
-  projects: { x: 160, y: 40 },
-  skills:   { x: 100, y: 90 },
-  contact:  { x: 200, y: 60 },
-  terminal: { x: 140, y: 80 },
-  ie:       { x: 60,  y: 30 },
-  notepad:  { x: 180, y: 50 },
-  minesweeper: { x: 220, y: 60 },
-  ai:          { x: 100, y: 40 },
-}
-
-const WINDOW_SIZES = {
-  about:    { w: 520, h: 440 },
-  resume:   { w: 600, h: 520 },
-  projects: { w: 680, h: 520 },
-  skills:   { w: 500, h: 440 },
-  contact:  { w: 460, h: 380 },
-  terminal: { w: 580, h: 400 },
-  ie:       { w: 880, h: 620 },
-  notepad:  { w: 480, h: 400 },
-  minesweeper: { w: 300, h: 380 },
-  ai:       { w: 420, h: 500 },
-  visitor:  { w: 560, h: 420 },
-}
+import { getWindowDefaults } from '../data/app-registry'
 
 export function useWindowManager() {
   const [windows, setWindows] = useState({})
@@ -43,8 +17,7 @@ export function useWindowManager() {
         }
       }
       // New window — auto-maximize on mobile
-      const defaultSize = { ...WINDOW_SIZES[id] }
-      const defaultPos = { ...INITIAL_POSITIONS[id] }
+      const { position: defaultPos, size: defaultSize } = getWindowDefaults(id)
       return {
         ...prev,
         [id]: {
@@ -98,8 +71,8 @@ export function useWindowManager() {
           [id]: {
             ...win,
             maximized: false,
-            position: win.prevPosition || INITIAL_POSITIONS[id],
-            size: win.prevSize || WINDOW_SIZES[id],
+            position: win.prevPosition || getWindowDefaults(id).position,
+            size: win.prevSize || getWindowDefaults(id).size,
           },
         }
       }

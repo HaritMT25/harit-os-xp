@@ -1,22 +1,15 @@
 import { useState, useCallback, useRef } from 'react'
+import { DESKTOP_APPS } from '../../data/app-registry'
 
-// initial icon positions — left column for core, right for interactive/featured
-const DESKTOP_ICONS = [
-  // left column
-  { id: 'about',       label: 'About Me',     icon: '👤', x: 16, y: 12 },
-  { id: 'resume',      label: 'My Resume',    icon: '📄', x: 16, y: 92 },
-  { id: 'projects',    label: 'My Projects',  icon: '📁', x: 16, y: 172 },
-  { id: 'skills',      label: 'Skills',       icon: '⚙️', x: 16, y: 252 },
-  { id: 'contact',     label: 'Contact Me',   icon: '✉️', x: 16, y: 332 },
-  { id: 'terminal',    label: 'Terminal',      icon: '💻', x: 16, y: 412 },
-  // top center — visitor map
-  { id: 'visitor',     label: 'Visitor Map',   icon: '🌍', x: 350, y: 12 },
-  // right column — featured
-  { id: 'ai',          label: 'HaritBot',      icon: '🤖', x: -90, y: 12, fromRight: true },
-  { id: 'ie',          label: 'Internet\nExplorer', icon: '🌐', x: -90, y: 92, fromRight: true },
-  { id: 'notepad',     label: 'Notepad',       icon: '📝', x: -90, y: 172, fromRight: true },
-  { id: 'minesweeper', label: 'Minesweeper',   icon: '💣', x: -90, y: 252, fromRight: true },
-]
+// Build icon config from registry
+const DESKTOP_ICONS = DESKTOP_APPS.map(app => ({
+  id: app.id,
+  label: app.desktopLabel || app.label,
+  icon: app.icon,
+  x: app.desktop.x,
+  y: app.desktop.y,
+  fromRight: app.desktop.fromRight || false,
+}))
 
 export default function Desktop({ onOpenWindow }) {
   const [positions, setPositions] = useState(() => {

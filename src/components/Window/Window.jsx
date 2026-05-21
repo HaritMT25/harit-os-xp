@@ -1,18 +1,5 @@
 import { useRef, useCallback, useState, useEffect } from 'react'
-
-const WINDOW_TITLES = {
-  about:    { title: 'About Me', icon: '👤' },
-  resume:   { title: 'My Resume', icon: '📄' },
-  projects: { title: 'My Projects — Explorer', icon: '📁' },
-  skills:   { title: 'Skills & Technologies', icon: '⚙️' },
-  contact:  { title: 'Contact Me — Outlook Express', icon: '✉️' },
-  terminal: { title: 'C:\\WINDOWS\\system32\\cmd.exe', icon: '💻' },
-  ie:       { title: 'Internet Explorer — Live Demos', icon: '🌐' },
-  notepad:  { title: 'Untitled - Notepad', icon: '📝' },
-  minesweeper: { title: 'Minesweeper', icon: '💣' },
-  ai:          { title: 'HaritBot — AI Assistant', icon: '🤖' },
-  visitor:     { title: 'Visitor Map', icon: '🌍' },
-}
+import { getWindowTitle } from '../../data/app-registry'
 
 export default function Window({
   id, windowState, zIndex, isActive,
@@ -29,7 +16,7 @@ export default function Window({
   }, [])
 
   const { position, size, maximized, minimized, closing } = windowState
-  const meta = WINDOW_TITLES[id] || { title: id, icon: '📋' }
+  const meta = getWindowTitle(id)
 
   // dragging — mouse + touch
   const handleTitleDown = useCallback((e) => {

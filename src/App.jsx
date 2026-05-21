@@ -18,20 +18,8 @@ const WelcomeDialog  = lazy(() => import('./components/WelcomeDialog'))
 const Clippy         = lazy(() => import('./components/Clippy'))
 const MSNPopup       = lazy(() => import('./components/MSNPopup'))
 
-// ── App components (loaded on-demand when window opens) ──
-const APP_COMPONENTS = {
-  about:       lazy(() => import('./apps/AboutMe')),
-  resume:      lazy(() => import('./apps/ResumeViewer')),
-  projects:    lazy(() => import('./apps/ProjectExplorer')),
-  skills:      lazy(() => import('./apps/SkillsPanel')),
-  contact:     lazy(() => import('./apps/ContactOutlook')),
-  terminal:    lazy(() => import('./apps/Terminal')),
-  ie:          lazy(() => import('./apps/InternetExplorer')),
-  notepad:     lazy(() => import('./apps/Notepad')),
-  minesweeper: lazy(() => import('./apps/Minesweeper')),
-  ai:          lazy(() => import('./apps/AIAssistant')),
-  visitor:     lazy(() => import('./apps/VisitorMap')),
-}
+// ── App components (registry-driven, loaded on-demand when window opens) ──
+import APP_REGISTRY from './data/app-registry'
 
 // ── Loading fallbacks ──
 function ScreenLoader() {
@@ -69,7 +57,7 @@ function WindowLoader() {
 const AppWindow = memo(function AppWindow({
   win, zIndex, isActive, onFocus, onClose, onMinimize, onMaximize, onMove, onResize,
 }) {
-  const AppComponent = APP_COMPONENTS[win.id]
+  const AppComponent = APP_REGISTRY[win.id]?.component
   if (!AppComponent) return null
 
   return (
