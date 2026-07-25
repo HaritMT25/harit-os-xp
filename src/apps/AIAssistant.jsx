@@ -1,59 +1,43 @@
 import { useState, useRef, useEffect } from 'react'
-import { personalInfo, experience, projects, skills, education, publications } from '../data/resume-data'
+import { personalInfo } from '../data/resume-data'
+import { SYSTEM_PROMPT, GROQ_MODEL, GROQ_URL } from '../data/haritbot-prompt'
 
-// groq config — key from .env, rotated periodically
-const GROQ_API_KEY = import.meta.env.VITE_GROQ_API_KEY || ''
-const GROQ_MODEL = 'llama-3.3-70b-versatile'
-const GROQ_URL = 'https://api.groq.com/openai/v1/chat/completions'
+// Production calls /api/chat (key stays server-side). In dev, a
+// VITE_GROQ_API_KEY in .env enables a direct call so `npm run dev`
+// works without `vercel dev`. import.meta.env.DEV is false in prod
+// builds, so this branch — and the key — is eliminated from the bundle.
+const DEV_KEY = import.meta.env.DEV ? (import.meta.env.VITE_GROQ_API_KEY || '') : ''
 
-// builds the full resume context string for the system prompt
-function buildContext() {
-  const s = []
-  s.push(`NAME: ${personalInfo.name}`)
-  s.push(`TITLE: ${personalInfo.title}`)
-  s.push(`LOCATION: ${personalInfo.location}`)
-  s.push(`TAGLINE: ${personalInfo.tagline}`)
-  s.push('')
-  s.push('EDUCATION:')
-  education.forEach(e => s.push(`- ${e.degree} at ${e.school} (GPA: ${e.gpa}, ${e.date})`))
-  s.push('')
-  s.push('EXPERIENCE:')
-  experience.forEach(e => { s.push(`- ${e.title} at ${e.org} (${e.date})`); s.push(`  ${e.details}`) })
-  s.push('')
-  s.push('PROJECTS:')
-  projects.forEach(p => { s.push(`- ${p.name} [${p.status}] — Tech: ${p.tech.join(', ')}`); s.push(`  ${p.description}`) })
-  s.push('')
-  s.push('SKILLS:')
-  Object.entries(skills).forEach(([cat, data]) => s.push(`- ${cat}: ${data.items.join(', ')}`))
-  s.push('')
-  s.push('PUBLICATIONS:')
-  publications.forEach(p => s.push(`- ${p.title} (${p.venue}) — ${p.description}`))
-  return s.join('\n')
+async function callGroqDirect(history) {
+  const response = await fetch(GROQ_URL, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${DEV_KEY}` },
+    body: JSON.stringify({
+      model: GROQ_MODEL,
+      messages: [{ role: 'system', content: SYSTEM_PROMPT }, ...history],
+      temperature: 0.7,
+      max_tokens: 512,
+    }),
+  })
+  if (!response.ok) throw new Error('api')
+  const data = await response.json()
+  return data.choices?.[0]?.message?.content
 }
 
-const SYSTEM_PROMPT = `You are HaritBot, an AI assistant embedded in ${personalInfo.name}'s interactive Windows XP-themed portfolio website. You are knowledgeable, enthusiastic, and genuinely impressed by ${personalInfo.name}'s work.
+async function callProxy(history) {
+  const response = await fetch('/api/chat', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ messages: history }),
+  })
+  if (response.status === 429) throw new Error('rate_limited')
+  if (!response.ok) throw new Error('api')
+  const data = await response.json()
+  return data.reply
+}
 
-Your personality:
-- You're like a proud colleague who knows ${personalInfo.name}'s work inside out
-- You speak with genuine enthusiasm — not fake corporate hype, but real technical appreciation
-- You can go deep on any project, skill, or experience when asked
-- You highlight impressive details: the published weather classification paper in Procedia Computer Science, the 75K+ steps/sec in Roboxers, the 100+ users on SriDarshan, the 60% reduction in reporting at Pandya Corp
-- You connect dots between experiences — how the research background informs the engineering, how the breadth shows adaptability
-- You're conversational and slightly witty, not stiff
-- If someone asks "why should I hire Harit?", you make a compelling case
-- You can answer technical questions about the projects in detail
-- If asked about something not in the resume data, you say so honestly rather than making things up
-
-Here is ${personalInfo.name}'s complete professional profile:
-
-${buildContext()}
-
-IMPORTANT RULES:
-- Keep responses concise (2-4 sentences for simple questions, longer for detailed ones)
-- Never make up information not in the profile above
-- If asked about weaknesses, be honest but constructive (e.g., "breadth of interests sometimes means juggling many things")
-- You're speaking to recruiters, hiring managers, or fellow engineers visiting the portfolio
-- You ARE the portfolio's AI assistant — you know you're running inside an XP-themed website and can reference that`
+const GREETING_ONLINE = `Hey! I'm HaritBot 🤖 — I know everything about ${personalInfo.name}'s work and I'm not shy about it. Ask me anything about projects, experience, skills, or why you should hire this person. I'm biased, but I'm also right.`
+const GREETING_OFFLINE = `Hey! I'm HaritBot 🤖 — I'm currently offline, but you can still explore the rest of the portfolio. Check out the projects, resume, or terminal for a deep dive into ${personalInfo.name}'s work.`
 
 const SUGGESTED_QUESTIONS = [
   "What makes Harit stand out?",
@@ -65,14 +49,9 @@ const SUGGESTED_QUESTIONS = [
 ]
 
 export default function AIAssistant() {
-  const [messages, setMessages] = useState([
-    {
-      role: 'assistant',
-      content: GROQ_API_KEY
-        ? `Hey! I'm HaritBot 🤖 — I know everything about ${personalInfo.name}'s work and I'm not shy about it. Ask me anything about projects, experience, skills, or why you should hire this person. I'm biased, but I'm also right.`
-        : `Hey! I'm HaritBot 🤖 — I'm currently offline, but you can still explore the rest of the portfolio. Check out the projects, resume, or terminal for a deep dive into ${personalInfo.name}'s work.`,
-    },
-  ])
+  // null = still checking /api/chat health
+  const [isOnline, setIsOnline] = useState(DEV_KEY ? true : null)
+  const [messages, setMessages] = useState([{ role: 'assistant', content: GREETING_ONLINE }])
   const [input, setInput] = useState('')
   const [loading, setLoading] = useState(false)
   const bottomRef = useRef(null)
@@ -81,8 +60,25 @@ export default function AIAssistant() {
   useEffect(() => { bottomRef.current?.scrollIntoView({ behavior: 'smooth' }) }, [messages])
   useEffect(() => { inputRef.current?.focus() }, [])
 
+  // health check: does the serverless proxy have a key configured?
+  useEffect(() => {
+    if (DEV_KEY) return
+    let cancelled = false
+    fetch('/api/chat')
+      .then(r => r.json())
+      .then(d => { if (!cancelled) setIsOnline(!!d.configured) })
+      .catch(() => { if (!cancelled) setIsOnline(false) })
+    return () => { cancelled = true }
+  }, [])
+
+  useEffect(() => {
+    if (isOnline === false) {
+      setMessages([{ role: 'assistant', content: GREETING_OFFLINE }])
+    }
+  }, [isOnline])
+
   const sendMessage = async (text) => {
-    if (!text.trim() || !GROQ_API_KEY) return
+    if (!text.trim() || isOnline !== true || loading) return
 
     const userMsg = { role: 'user', content: text.trim() }
     const newMessages = [...messages, userMsg]
@@ -91,32 +87,18 @@ export default function AIAssistant() {
     setLoading(true)
 
     try {
-      const response = await fetch(GROQ_URL, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${GROQ_API_KEY}` },
-        body: JSON.stringify({
-          model: GROQ_MODEL,
-          messages: [
-            { role: 'system', content: SYSTEM_PROMPT },
-            ...newMessages.map(m => ({ role: m.role, content: m.content })),
-          ],
-          temperature: 0.7,
-          max_tokens: 512,
-        }),
-      })
-
-      if (!response.ok) {
-        const err = await response.json().catch(() => ({}))
-        throw new Error(err.error?.message || `API error: ${response.status}`)
-      }
-
-      const data = await response.json()
-      const reply = data.choices?.[0]?.message?.content || 'Hmm, I had trouble thinking of a response. Try again?'
-      setMessages(prev => [...prev, { role: 'assistant', content: reply }])
+      const history = newMessages.map(m => ({ role: m.role, content: m.content }))
+      const reply = DEV_KEY ? await callGroqDirect(history) : await callProxy(history)
+      setMessages(prev => [...prev, {
+        role: 'assistant',
+        content: reply || 'Hmm, I had trouble thinking of a response. Try again?',
+      }])
     } catch (err) {
       setMessages(prev => [...prev, {
         role: 'assistant',
-        content: `Ran into a connection issue — try again in a moment. In the meantime, the resume viewer and project explorer have all the details.`,
+        content: err.message === 'rate_limited'
+          ? `I'm getting a lot of questions right now — give it a few minutes and try again. The resume viewer and project explorer have all the details in the meantime.`
+          : `Ran into a connection issue — try again in a moment. In the meantime, the resume viewer and project explorer have all the details.`,
       }])
     } finally {
       setLoading(false)
@@ -128,8 +110,6 @@ export default function AIAssistant() {
     if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(input) }
   }
 
-  const isOnline = !!GROQ_API_KEY
-
   return (
     <div style={styles.container}>
       {/* header */}
@@ -138,8 +118,8 @@ export default function AIAssistant() {
         <div style={{ flex: 1 }}>
           <div style={styles.headerName}>HaritBot</div>
           <div style={styles.headerStatus}>
-            <span style={{ ...styles.statusDot, background: isOnline ? '#4caf50' : '#888' }} />
-            {loading ? 'typing...' : isOnline ? 'Online' : 'Offline'}
+            <span style={{ ...styles.statusDot, background: isOnline === true ? '#4caf50' : isOnline === null ? '#f0ad4e' : '#888' }} />
+            {loading ? 'typing...' : isOnline === true ? 'Online' : isOnline === null ? 'Connecting...' : 'Offline'}
           </div>
         </div>
       </div>
@@ -185,20 +165,21 @@ export default function AIAssistant() {
           value={input}
           onChange={(e) => setInput(e.target.value)}
           onKeyDown={handleKeyDown}
-          placeholder={isOnline ? "Ask me about Harit's work..." : 'HaritBot is offline'}
-          disabled={!isOnline || loading}
-          style={{ ...styles.input, opacity: isOnline ? 1 : 0.5 }}
+          placeholder={isOnline === true ? "Ask me about Harit's work..." : isOnline === null ? 'Connecting...' : 'HaritBot is offline'}
+          disabled={isOnline !== true || loading}
+          style={{ ...styles.input, opacity: isOnline === true ? 1 : 0.5 }}
           spellCheck={false}
+          aria-label="Message HaritBot"
         />
         <button
           onClick={() => sendMessage(input)}
-          disabled={!input.trim() || loading || !isOnline}
-          style={{ ...styles.sendBtn, opacity: (!input.trim() || loading || !isOnline) ? 0.5 : 1 }}
+          disabled={!input.trim() || loading || isOnline !== true}
+          style={{ ...styles.sendBtn, opacity: (!input.trim() || loading || isOnline !== true) ? 0.5 : 1 }}
         >Send</button>
       </div>
 
       <div style={styles.footer}>
-        {isOnline ? 'Powered by Groq · Llama 3.3' : 'Currently offline'}
+        {isOnline === true ? 'Powered by Groq · Llama 3.3' : isOnline === null ? 'Connecting...' : 'Currently offline'}
       </div>
     </div>
   )

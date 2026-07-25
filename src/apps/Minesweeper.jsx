@@ -1,11 +1,11 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
 
-const ROWS = 9
-const COLS = 9
-const MINES = 10
+export const ROWS = 9
+export const COLS = 9
+export const MINES = 10
 const IS_TOUCH = typeof window !== 'undefined' && 'ontouchstart' in window
 
-function createBoard() {
+export function createBoard() {
   const board = Array(ROWS).fill(null).map(() =>
     Array(COLS).fill(null).map(() => ({
       mine: false, revealed: false, flagged: false, count: 0,

@@ -6,7 +6,7 @@ export const personalInfo = {
   email: 'harittarwani@gmail.com',
   github: 'github.com/HaritMT25',
   linkedin: 'linkedin.com/in/harit-tarwani',
-  website: 'harit.dev',
+  website: 'harit-os-xp.vercel.app',
 }
 
 export const education = [

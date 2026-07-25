@@ -273,6 +273,7 @@ export default function Terminal() {
             autoCapitalize="none"
             autoCorrect="off"
             enterKeyHint="go"
+            aria-label="Terminal command input"
           />
         </div>
         <div ref={bottomRef} />

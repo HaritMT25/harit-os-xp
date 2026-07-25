@@ -1,9 +1,16 @@
 import { useState } from 'react'
+import { welcomePref, setWelcomePref } from '../hooks/useAppMode'
 
 const IS_TOUCH = typeof window !== 'undefined' && 'ontouchstart' in window
 
 export default function WelcomeDialog({ onClose }) {
   const [tab, setTab] = useState('welcome')
+  const [showAtStartup, setShowAtStartup] = useState(welcomePref)
+
+  const handleShowAtStartup = (e) => {
+    setShowAtStartup(e.target.checked)
+    setWelcomePref(e.target.checked)
+  }
 
   return (
     <div style={styles.overlay} onClick={onClose}>
@@ -137,7 +144,7 @@ export default function WelcomeDialog({ onClose }) {
         {/* Footer */}
         <div style={styles.footer}>
           <label style={styles.checkLabel}>
-            <input type="checkbox" style={styles.checkbox} defaultChecked />
+            <input type="checkbox" style={styles.checkbox} checked={showAtStartup} onChange={handleShowAtStartup} />
             <span>Show this at startup</span>
           </label>
           <button style={styles.okBtn} onClick={onClose}>

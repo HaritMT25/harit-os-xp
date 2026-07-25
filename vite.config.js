@@ -11,4 +11,7 @@ export default defineConfig({
   optimizeDeps: {
     exclude: ['ioredis'],
   },
+  test: {
+    environment: 'jsdom',
+  },
 })

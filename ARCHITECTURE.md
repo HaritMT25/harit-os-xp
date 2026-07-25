@@ -29,7 +29,8 @@ src/
 │   └── ModeSwitcher.jsx       # unified mode-switching buttons
 ├── hooks/
 │   ├── useWindowManager.js    # window state machine
-│   ├── useSounds.js           # audio system with graceful fallback
+│   ├── useViewport.js         # layout constants + viewport-aware sizing
+│   ├── useSounds.js           # Web Audio synth (no audio files)
 │   └── eventBus.js            # cross-component communication
 ├── components/
 │   ├── LandingPage.jsx        # mode chooser (Quick View / Full XP)
@@ -60,7 +61,8 @@ src/
 │   ├── animations.css         # all keyframes consolidated
 │   └── print.css              # print stylesheet for resume
 api/
-└── visits.js                  # Vercel serverless function for visitor pins
+├── visits.js                  # Vercel serverless function for visitor pins
+└── chat.js                    # HaritBot proxy — server-side Groq key + rate limiting
 ```
 
 ## Key Design Decisions
@@ -122,9 +124,11 @@ Every visitor is auto-pinned as "Anonymous" with city-level coordinates (rounded
 
 ### HaritBot — RAG Architecture
 
-The AI assistant builds a text context string from `resume-data.js` on every render and passes it as the system prompt to Groq's Llama 3.3 70B. It's not true vector-search RAG — the entire resume fits in the context window (~2K tokens), so full-context injection works fine. The system prompt instructs the model to be enthusiastic but honest, highlight specific metrics, and never fabricate information.
+The AI assistant builds a text context string from `resume-data.js` and passes it as the system prompt to Groq's Llama 3.3 70B. It's not true vector-search RAG — the entire resume fits in the context window (~2K tokens), so full-context injection works fine. The system prompt instructs the model to be enthusiastic but honest, highlight specific metrics, and never fabricate information.
 
-The bot gracefully degrades: no API key → shows "offline" with grey status dot, no error messages or setup instructions visible to visitors.
+In production the browser calls `api/chat.js`, a serverless proxy that holds the Groq key (`GROQ_API_KEY`, never bundled), owns the system prompt (so the endpoint can't be repurposed as a generic LLM API), and rate-limits 30 requests/IP/hour via Redis (fail-open if Redis is down). The prompt lives in `src/data/haritbot-prompt.js`, shared with a dev-only direct-call path that lets `npm run dev` work without `vercel dev` — that branch is guarded by `import.meta.env.DEV`, so the key is dead-code-eliminated from production bundles.
+
+The bot gracefully degrades: the client health-checks `GET /api/chat` on mount; no key configured → "offline" with a grey status dot, no error messages or setup instructions visible to visitors.
 
 ### XP Theme System
 

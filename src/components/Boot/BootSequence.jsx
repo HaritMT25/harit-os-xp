@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
 
 const PHASES = {
   BIOS: 0,
@@ -24,6 +24,24 @@ export default function BootSequence({ onComplete }) {
   const [phase, setPhase] = useState(PHASES.BIOS)
   const [biosLine, setBiosLine] = useState(0)
   const [progress, setProgress] = useState(0)
+  const finished = useRef(false)
+
+  const finish = useCallback(() => {
+    if (finished.current) return
+    finished.current = true
+    setPhase(PHASES.DONE)
+    onComplete()
+  }, [onComplete])
+
+  // Skippable: click/tap or any key. Reduced-motion users skip automatically.
+  useEffect(() => {
+    if (window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) {
+      const timer = setTimeout(finish, 200)
+      return () => clearTimeout(timer)
+    }
+    window.addEventListener('keydown', finish)
+    return () => window.removeEventListener('keydown', finish)
+  }, [finish])
 
   // BIOS text reveal
   useEffect(() => {
@@ -53,19 +71,17 @@ export default function BootSequence({ onComplete }) {
   // Welcome screen
   useEffect(() => {
     if (phase !== PHASES.WELCOME) return
-    const timer = setTimeout(() => {
-      setPhase(PHASES.DONE)
-      onComplete()
-    }, 1800)
+    const timer = setTimeout(finish, 1800)
     return () => clearTimeout(timer)
-  }, [phase, onComplete])
+  }, [phase, finish])
 
   if (phase === PHASES.DONE) return null
 
   return (
-    <div style={styles.container}>
+    <div style={styles.container} onClick={finish}>
       {/* CRT scanline overlay */}
       <div style={styles.scanlines} />
+      <div style={styles.skipHint}>Click or press any key to skip</div>
 
       {phase === PHASES.BIOS && (
         <div style={styles.biosScreen}>
@@ -151,6 +167,17 @@ const styles = {
     background: 'repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,0,0,0.05) 2px, rgba(0,0,0,0.05) 4px)',
     pointerEvents: 'none',
     zIndex: 1,
+  },
+  skipHint: {
+    position: 'absolute',
+    bottom: 16,
+    right: 20,
+    color: '#555',
+    fontSize: 11,
+    fontFamily: "'Tahoma', sans-serif",
+    zIndex: 2,
+    userSelect: 'none',
+    pointerEvents: 'none',
   },
 
   // BIOS

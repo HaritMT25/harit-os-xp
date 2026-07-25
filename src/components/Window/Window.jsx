@@ -154,9 +154,9 @@ export default function Window({
 
         {/* Window buttons */}
         <div style={{ display: 'flex', gap: 2, flexShrink: 0 }}>
-          <TitleButton icon="min" onClick={() => onMinimize(id)} type="normal" />
-          <TitleButton icon={maximized ? "restore" : "max"} onClick={() => onMaximize(id)} type="normal" />
-          <TitleButton icon="close" onClick={() => onClose(id)} type="close" />
+          <TitleButton icon="min" label="Minimize" onClick={() => onMinimize(id)} type="normal" />
+          <TitleButton icon={maximized ? "restore" : "max"} label={maximized ? 'Restore' : 'Maximize'} onClick={() => onMaximize(id)} type="normal" />
+          <TitleButton icon="close" label="Close" onClick={() => onClose(id)} type="close" />
         </div>
       </div>
 
@@ -231,11 +231,13 @@ const BTN_ICONS = {
   close: <svg width="10" height="10" viewBox="0 0 10 10"><line x1="1" y1="1" x2="9" y2="9" stroke="#fff" strokeWidth="2"/><line x1="9" y1="1" x2="1" y2="9" stroke="#fff" strokeWidth="2"/></svg>,
 }
 
-function TitleButton({ icon, onClick, type }) {
+function TitleButton({ icon, label, onClick, type }) {
   const [hover, setHover] = useState(false)
   const isClose = type === 'close'
   return (
     <button
+      aria-label={label}
+      title={label}
       onClick={(e) => { e.stopPropagation(); onClick() }}
       onTouchEnd={(e) => { e.stopPropagation(); e.preventDefault(); onClick() }}
       onMouseEnter={() => setHover(true)}

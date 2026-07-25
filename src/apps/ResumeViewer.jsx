@@ -74,7 +74,7 @@ export default function ResumeViewer() {
 
           <div style={styles.pageFooter}>
             <span>Page 1 of 1</span>
-            <span>harit.dev</span>
+            <span>{personalInfo.website}</span>
           </div>
         </div>
       </div>

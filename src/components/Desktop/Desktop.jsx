@@ -137,6 +137,15 @@ export default function Desktop({ onOpenWindow }) {
       {DESKTOP_ICONS.map((icon) => (
         <div
           key={icon.id}
+          role="button"
+          tabIndex={0}
+          aria-label={`Open ${icon.label.replace('\n', ' ')}`}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' || e.key === ' ') {
+              e.preventDefault()
+              onOpenWindow(icon.id)
+            }
+          }}
           onMouseDown={(e) => handlePointerDown(e, icon.id)}
           onTouchStart={(e) => handlePointerDown(e, icon.id)}
           onDoubleClick={() => handleDoubleClick(icon.id)}

@@ -59,6 +59,7 @@ export default function Clippy({ onOpenWindow, delay = 12000 }) {
         <button
           onClick={() => { setVisible(false); setDismissed(true) }}
           style={styles.bubbleClose}
+          aria-label="Dismiss Clippy"
         >✕</button>
         <p style={styles.bubbleText}>{msg.text}</p>
         <div style={styles.bubbleActions}>

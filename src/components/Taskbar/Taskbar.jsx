@@ -20,7 +20,7 @@ export default function Taskbar({ windows, windowOrder, onOpenWindow, onTaskbarC
     return () => clearInterval(interval)
   }, [])
 
-  // Close start menu when clicking/tapping outside
+  // Close start menu when clicking/tapping outside or pressing Esc
   useEffect(() => {
     if (!startOpen) return
     const handleClick = (e) => {
@@ -28,11 +28,16 @@ export default function Taskbar({ windows, windowOrder, onOpenWindow, onTaskbarC
         setStartOpen(false)
       }
     }
+    const handleKey = (e) => {
+      if (e.key === 'Escape') setStartOpen(false)
+    }
     document.addEventListener('mousedown', handleClick)
     document.addEventListener('touchstart', handleClick)
+    document.addEventListener('keydown', handleKey)
     return () => {
       document.removeEventListener('mousedown', handleClick)
       document.removeEventListener('touchstart', handleClick)
+      document.removeEventListener('keydown', handleKey)
     }
   }, [startOpen])
 
@@ -130,6 +135,9 @@ export default function Taskbar({ windows, windowOrder, onOpenWindow, onTaskbarC
         {/* Start Button */}
         <button
           onClick={handleStartClick}
+          aria-haspopup="menu"
+          aria-expanded={startOpen}
+          aria-label="Start menu"
           style={{
             ...styles.startButton,
             background: startOpen ? 'var(--xp-start-hover)' : 'var(--xp-start-bg)',
@@ -207,7 +215,14 @@ function StartMenuItem({ item, onClick }) {
   const [hover, setHover] = useState(false)
   return (
     <div
+      role="menuitem"
+      tabIndex={0}
       onClick={onClick}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onClick() }
+      }}
+      onFocus={() => setHover(true)}
+      onBlur={() => setHover(false)}
       onMouseEnter={() => setHover(true)}
       onMouseLeave={() => setHover(false)}
       style={{

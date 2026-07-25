@@ -49,6 +49,7 @@ export default function MSNPopup({ onOpenWindow, delay = 18000 }) {
         <button
           onClick={(e) => { e.stopPropagation(); handleClose() }}
           style={styles.closeBtn}
+          aria-label="Dismiss notification"
         >✕</button>
       </div>
 

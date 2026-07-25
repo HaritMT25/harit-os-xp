@@ -1,5 +1,7 @@
 # HaritOS XP
 
+![HaritOS XP — interactive Windows XP-themed portfolio](public/og.png)
+
 An interactive Windows XP-themed portfolio website with a dual-mode interface: a clean modern portfolio for quick browsing and a full XP desktop experience with 10+ apps, an AI assistant, and Minesweeper.
 
 Built with React + Vite. All code is original — no assets or code from any other project were used.
@@ -72,10 +74,9 @@ Update these `// TODO` fields before deploying:
 ### HaritBot (AI Assistant)
 
 1. Get a free API key at [console.groq.com](https://console.groq.com)
-2. Add to `.env`: `VITE_GROQ_API_KEY=gsk_your_key_here`
-3. The bot has full context of your resume data and answers recruiter questions
-
-> **Note:** The API key is in the frontend bundle. This is acceptable for Groq's free tier with rate limits. Don't attach billing to this key.
+2. **Production (Vercel):** set `GROQ_API_KEY` as an environment variable. The `api/chat.js` serverless proxy keeps the key server-side, owns the system prompt, and rate-limits per IP (30 req/hour via Redis, fail-open without it). `VITE_GROQ_API_KEY` is also accepted for backwards compatibility.
+3. **Local dev:** add `VITE_GROQ_API_KEY` to `.env` — `npm run dev` then calls Groq directly. This dev-only path (and the key) is eliminated from production bundles.
+4. The bot has full context of your resume data and answers recruiter questions
 
 ### Embedding Live Projects
 
@@ -83,7 +84,7 @@ Edit `src/apps/InternetExplorer.jsx` — add deployed URLs to the `BOOKMARKS` ar
 
 ### Sound Effects
 
-Drop `.mp3` files into `public/sounds/` (startup, click, close, minimize, error, notify). Degrades gracefully if missing.
+All UI sounds (startup chime, clicks, minimize/close, notifications) are synthesized at runtime with the Web Audio API — no audio files, and every melody is original. Silently no-ops if the browser blocks audio.
 
 ## Deployment
 
