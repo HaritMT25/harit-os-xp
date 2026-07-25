@@ -1,5 +1,6 @@
 import { useCallback, useEffect, lazy, Suspense, memo } from 'react'
 import { useWindowManager } from './hooks/useWindowManager'
+import { FULL_HEIGHT } from './hooks/useViewport'
 import { useAppMode } from './hooks/useAppMode'
 import { useVisitorTracking } from './hooks/useVisitorTracking'
 import { useSounds } from './hooks/useSounds'
@@ -95,7 +96,7 @@ export default function App() {
   const {
     windows, windowOrder,
     openWindow, closeWindow, focusWindow,
-    minimizeWindow, toggleMaximize,
+    minimizeWindow, minimizeAll, toggleMaximize,
     moveWindow, resizeWindow,
     taskbarClick, getZIndex, isTopWindow,
   } = useWindowManager()
@@ -172,7 +173,7 @@ export default function App() {
 
   // ── XP DESKTOP ──
   return (
-    <div style={{ width: '100vw', height: '100vh', overflow: 'hidden' }}>
+    <div style={{ width: '100vw', height: FULL_HEIGHT, overflow: 'hidden' }}>
       <Suspense fallback={<ScreenLoader />}>
         <Desktop onOpenWindow={handleOpenWindow} />
       </Suspense>
@@ -198,6 +199,7 @@ export default function App() {
           windowOrder={windowOrder}
           onOpenWindow={handleOpenWindow}
           onTaskbarClick={taskbarClick}
+          onShowDesktop={minimizeAll}
           onNavigate={navigate}
         />
         <Clippy onOpenWindow={handleOpenWindow} delay={12000} />

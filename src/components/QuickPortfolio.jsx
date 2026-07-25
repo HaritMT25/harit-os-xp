@@ -1,21 +1,42 @@
-import { useState } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { personalInfo, education, experience, projects, skills, publications } from '../data/resume-data'
 import {
   ProfileHeader, SectionHeader, ExperienceEntry, EducationEntry,
   ProjectCard, SkillGroup, ContactRow, PublicationEntry,
 } from '../shared'
 import { XPModeButton, XPBanner } from '../shared/ModeSwitcher'
+import { FULL_HEIGHT } from '../hooks/useViewport'
+
+const NAV_ITEMS = [
+  { id: 'about', label: 'About' },
+  { id: 'experience', label: 'Experience' },
+  { id: 'projects', label: 'Projects' },
+  { id: 'skills', label: 'Skills' },
+  { id: 'contact', label: 'Contact' },
+]
 
 export default function QuickPortfolio({ onSwitchToXP }) {
   const [activeSection, setActiveSection] = useState('about')
+  const mainRef = useRef(null)
 
-  const NAV_ITEMS = [
-    { id: 'about', label: 'About' },
-    { id: 'experience', label: 'Experience' },
-    { id: 'projects', label: 'Projects' },
-    { id: 'skills', label: 'Skills' },
-    { id: 'contact', label: 'Contact' },
-  ]
+  // scroll-spy: highlight the nav item for the section in view
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        for (const entry of entries) {
+          if (entry.isIntersecting) {
+            setActiveSection(entry.target.id.replace('section-', ''))
+          }
+        }
+      },
+      { root: mainRef.current, rootMargin: '-35% 0px -60% 0px' }
+    )
+    NAV_ITEMS.forEach(item => {
+      const el = document.getElementById(`section-${item.id}`)
+      if (el) observer.observe(el)
+    })
+    return () => observer.disconnect()
+  }, [])
 
   const scrollTo = (id) => {
     setActiveSection(id)
@@ -31,7 +52,7 @@ export default function QuickPortfolio({ onSwitchToXP }) {
             <span style={styles.navLogoName}>Harit</span>
             <span style={styles.navLogoDot}>.</span>
           </span>
-          <div style={styles.navLinks}>
+          <div style={styles.navLinks} className="hide-scrollbar">
             {NAV_ITEMS.map(item => (
               <button
                 key={item.id}
@@ -46,12 +67,12 @@ export default function QuickPortfolio({ onSwitchToXP }) {
               </button>
             ))}
           </div>
-          <XPModeButton onClick={onSwitchToXP} />
+          <XPModeButton onClick={onSwitchToXP} style={{ flexShrink: 0 }} />
         </div>
       </nav>
 
       {/* Main scrollable content */}
-      <main style={styles.main}>
+      <main ref={mainRef} style={styles.main}>
 
         {/* ─── Hero / About ─── */}
         <section id="section-about" style={styles.hero}>
@@ -163,7 +184,7 @@ export default function QuickPortfolio({ onSwitchToXP }) {
 const styles = {
   page: {
     width: '100vw',
-    height: '100vh',
+    height: FULL_HEIGHT,
     overflow: 'hidden',
     display: 'flex',
     flexDirection: 'column',
@@ -184,32 +205,37 @@ const styles = {
   navInner: {
     maxWidth: 900,
     margin: '0 auto',
-    padding: '0 24px',
+    padding: '0 clamp(10px, 3vw, 24px)',
     height: 56,
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'space-between',
+    gap: 10,
   },
   navLogo: {
     fontSize: 22,
     fontWeight: 300,
+    flexShrink: 0,
   },
   navLogoName: { fontWeight: 700, color: '#1a1a2e' },
   navLogoDot: { color: '#0078d7' },
   navLinks: {
     display: 'flex',
     gap: 4,
+    minWidth: 0,
+    overflowX: 'auto',
   },
   navLink: {
     background: 'none',
     border: 'none',
     borderBottom: '2px solid transparent',
-    padding: '16px 12px',
+    padding: '16px 10px',
     fontSize: 13,
     cursor: 'pointer',
     fontFamily: 'inherit',
     fontWeight: 500,
     transition: 'all 0.15s',
+    whiteSpace: 'nowrap',
   },
   // Main
   main: {

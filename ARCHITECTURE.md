@@ -100,7 +100,17 @@ Three layers of error boundaries:
 
 ### Touch Support
 
-Desktop icons and window title bars handle both mouse and touch events through unified handlers. On touch devices, a single tap opens an app (since there's no double-click). A 5px movement threshold distinguishes taps from drags. Windows are draggable by their title bar on touch.
+Desktop icons and window title bars handle both mouse and touch events through unified handlers. On touch devices, a single tap opens an app (since there's no double-click). A 5px movement threshold distinguishes taps from drags. Windows are draggable by their title bar on touch. Touch drags call `preventDefault()` on `touchmove` (plus `touch-action: none` on draggables) so the page never scrolls or rubber-bands mid-drag. Minesweeper flags via long-press or a 🚩 toggle since there's no right-click.
+
+### Responsive Strategy
+
+`src/hooks/useViewport.js` is the single source of truth for shell layout: the taskbar height constant, the mobile breakpoint, `100dvh`-based height strings (with `100vh` fallback), and a debounced `useViewportSize()` hook.
+
+- **Maximized windows are CSS-sized** (`calc(100dvh - taskbar)`) so they track the live viewport — URL bar collapse, rotation, keyboard — without JS resize math. Non-maximized windows are clamped back into the viewport by a resize listener in `useWindowManager`.
+- **Windows open fitted**: on phones they open maximized; on tablets/small laptops registry defaults are shrunk to fit before opening.
+- **Desktop icons** use registry positions on wide screens but auto-arrange into a column-flow grid below 768px, reflowing on rotation. User-dragged icons keep their placement (clamped on-screen).
+- **Taskbar** hides quick-launch and decorative tray icons below 560px to leave room for window tabs; the start menu caps at `min(380px, 100vw)` and scrolls when short on height.
+- **Inputs are ≥16px on coarse pointers** (via a CSS override) so iOS Safari doesn't auto-zoom on focus; the XP scrollbars slim from 17px to 8px on touch devices.
 
 ### Leaflet (Not react-leaflet)
 

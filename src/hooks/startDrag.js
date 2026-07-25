@@ -29,6 +29,8 @@ export function startDrag(e, { onMove, onEnd, threshold = 0, touch = true } = {}
       if (Math.abs(pt.x - start.x) <= threshold && Math.abs(pt.y - start.y) <= threshold) return
       moved = true
     }
+    // stop page scroll / pull-to-refresh while dragging on touch
+    if (ev.touches && ev.cancelable) ev.preventDefault()
     onMove?.(pt.x, pt.y, start.x, start.y)
   }
 
@@ -38,6 +40,7 @@ export function startDrag(e, { onMove, onEnd, threshold = 0, touch = true } = {}
     if (touch) {
       document.removeEventListener('touchmove', handleMove)
       document.removeEventListener('touchend', handleUp)
+      document.removeEventListener('touchcancel', handleUp)
     }
     onEnd?.({ moved })
   }
@@ -47,5 +50,6 @@ export function startDrag(e, { onMove, onEnd, threshold = 0, touch = true } = {}
   if (touch) {
     document.addEventListener('touchmove', handleMove, { passive: false })
     document.addEventListener('touchend', handleUp)
+    document.addEventListener('touchcancel', handleUp)
   }
 }

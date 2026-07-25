@@ -1,40 +1,49 @@
 import { personalInfo, education } from '../data/resume-data'
 import { openWindow } from '../hooks/eventBus'
+import { useViewportSize } from '../hooks/useViewport'
 import { ProfileHeader, SectionHeader, EducationEntry, SkillBadge } from '../shared'
 
 export default function AboutMe() {
-  return (
-    <div style={styles.container}>
-      <div style={styles.sidebar}>
-        <div style={styles.sideSection}>
-          <div style={styles.sideTitle}>ℹ️ Quick Links</div>
-          <div style={styles.sideLink} onClick={() => openWindow('resume')}>View my resume</div>
-          <div style={styles.sideLink} onClick={() => openWindow('projects')}>See my projects</div>
-          <div style={styles.sideLink} onClick={() => openWindow('contact')}>Contact me</div>
-          <div style={styles.sideLink} onClick={() => openWindow('ai')}>Chat with HaritBot</div>
+  const { w } = useViewportSize()
+  // apps are full-width on phones — stack the sidebar under the content
+  const narrow = w < 520
+
+  const sidebar = (
+    <div style={{ ...styles.sidebar, ...(narrow ? styles.sidebarNarrow : {}) }}>
+      <div style={styles.sideSection}>
+        <div style={styles.sideTitle}>ℹ️ Quick Links</div>
+        <div style={styles.sideLink} onClick={() => openWindow('resume')}>View my resume</div>
+        <div style={styles.sideLink} onClick={() => openWindow('projects')}>See my projects</div>
+        <div style={styles.sideLink} onClick={() => openWindow('contact')}>Contact me</div>
+        <div style={styles.sideLink} onClick={() => openWindow('ai')}>Chat with HaritBot</div>
+      </div>
+      <div style={styles.sideSection}>
+        <div style={styles.sideTitle}>📋 Details</div>
+        <div style={styles.sideDetail}>
+          <span style={styles.detailLabel}>Location</span>
+          <span>{personalInfo.location}</span>
         </div>
-        <div style={styles.sideSection}>
-          <div style={styles.sideTitle}>📋 Details</div>
-          <div style={styles.sideDetail}>
-            <span style={styles.detailLabel}>Location</span>
-            <span>{personalInfo.location}</span>
-          </div>
-          <div style={styles.sideDetail}>
-            <span style={styles.detailLabel}>Status</span>
-            <span style={{ color: '#90ee90' }}>Open to work</span>
-          </div>
-          <div style={styles.sideDetail}>
-            <span style={styles.detailLabel}>Email</span>
-            <a href={`mailto:${personalInfo.email}`} style={{ color: '#e0ecff', fontSize: 10, textDecoration: 'underline' }}>{personalInfo.email}</a>
-          </div>
-          <div style={styles.sideDetail}>
-            <span style={styles.detailLabel}>GitHub</span>
-            <a href={`https://${personalInfo.github}`} target="_blank" rel="noopener noreferrer" style={{ color: '#e0ecff', fontSize: 10, textDecoration: 'underline' }}>{personalInfo.github}</a>
-          </div>
+        <div style={styles.sideDetail}>
+          <span style={styles.detailLabel}>Status</span>
+          <span style={{ color: '#90ee90' }}>Open to work</span>
+        </div>
+        <div style={styles.sideDetail}>
+          <span style={styles.detailLabel}>Email</span>
+          <a href={`mailto:${personalInfo.email}`} style={{ color: '#e0ecff', fontSize: 10, textDecoration: 'underline' }}>{personalInfo.email}</a>
+        </div>
+        <div style={styles.sideDetail}>
+          <span style={styles.detailLabel}>GitHub</span>
+          <a href={`https://${personalInfo.github}`} target="_blank" rel="noopener noreferrer" style={{ color: '#e0ecff', fontSize: 10, textDecoration: 'underline' }}>{personalInfo.github}</a>
         </div>
       </div>
+    </div>
+  )
 
-      <div style={styles.main}>
+  return (
+    <div style={{ ...styles.container, ...(narrow ? styles.containerNarrow : {}) }}>
+      {!narrow && sidebar}
+
+      <div style={{ ...styles.main, ...(narrow ? styles.mainNarrow : {}) }}>
         <ProfileHeader
           name={personalInfo.name}
           title={personalInfo.title}
@@ -69,17 +78,25 @@ export default function AboutMe() {
           ))}
         </div>
       </div>
+
+      {narrow && sidebar}
     </div>
   )
 }
 
 const styles = {
   container: { display: 'flex', height: '100%', fontFamily: "'Tahoma', sans-serif", fontSize: 12 },
+  containerNarrow: { flexDirection: 'column', overflowY: 'auto' },
   sidebar: {
     width: 160, background: 'linear-gradient(180deg, #6b93d6 0%, #3968b5 100%)',
     padding: 12, flexShrink: 0, overflowY: 'auto',
   },
-  sideSection: { marginBottom: 14 },
+  sidebarNarrow: {
+    width: '100%', display: 'flex', flexWrap: 'wrap', gap: 20,
+    overflowY: 'visible', padding: 16,
+  },
+  mainNarrow: { overflowY: 'visible', flex: 'none' },
+  sideSection: { marginBottom: 14, minWidth: 150, flex: 1 },
   sideTitle: { color: '#fff', fontWeight: 700, fontSize: 11, marginBottom: 6, textShadow: '1px 1px 2px rgba(0,0,0,0.3)' },
   sideLink: { color: '#e0ecff', fontSize: 10, padding: '4px 0 4px 8px', cursor: 'pointer', textDecoration: 'underline' },
   sideDetail: { color: '#d0e0ff', fontSize: 10, padding: '3px 0 3px 8px', display: 'flex', flexDirection: 'column', gap: 1, marginBottom: 4 },

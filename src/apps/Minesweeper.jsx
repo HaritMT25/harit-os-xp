@@ -1,8 +1,9 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 
 const ROWS = 9
 const COLS = 9
 const MINES = 10
+const IS_TOUCH = typeof window !== 'undefined' && 'ontouchstart' in window
 
 function createBoard() {
   const board = Array(ROWS).fill(null).map(() =>
@@ -53,6 +54,9 @@ export default function Minesweeper() {
   const [face, setFace] = useState('🙂')
   const [time, setTime] = useState(0)
   const [started, setStarted] = useState(false)
+  // touch flagging: 🚩 mode makes taps flag; long-press flags directly
+  const [flagMode, setFlagMode] = useState(false)
+  const longPress = useRef({ timer: null, fired: false })
 
   // Timer
   useEffect(() => {
@@ -79,8 +83,21 @@ export default function Minesweeper() {
     }
   }, [])
 
+  const toggleFlag = useCallback((r, c) => {
+    if (gameOver || won) return
+    const newBoard = cloneBoard(board)
+    const cell = newBoard[r][c]
+    if (cell.revealed) return
+    cell.flagged = !cell.flagged
+    setBoard(newBoard)
+  }, [board, gameOver, won])
+
   const handleClick = useCallback((r, c) => {
     if (gameOver || won) return
+    if (flagMode) {
+      toggleFlag(r, c)
+      return
+    }
     if (!started) setStarted(true)
 
     const newBoard = cloneBoard(board)
@@ -107,17 +124,32 @@ export default function Minesweeper() {
     }
 
     setBoard(newBoard)
-  }, [board, gameOver, won, started, reveal])
+  }, [board, gameOver, won, started, flagMode, reveal, toggleFlag])
 
   const handleRightClick = useCallback((e, r, c) => {
     e.preventDefault()
-    if (gameOver || won) return
-    const newBoard = cloneBoard(board)
-    const cell = newBoard[r][c]
-    if (cell.revealed) return
-    cell.flagged = !cell.flagged
-    setBoard(newBoard)
-  }, [board, gameOver, won])
+    // Android fires contextmenu on long-press — skip if already flagged there
+    if (longPress.current.fired) return
+    toggleFlag(r, c)
+  }, [toggleFlag])
+
+  const handleTouchStart = useCallback((r, c) => {
+    longPress.current.fired = false
+    longPress.current.timer = setTimeout(() => {
+      longPress.current.fired = true
+      toggleFlag(r, c)
+      navigator.vibrate?.(15)
+    }, 400)
+  }, [toggleFlag])
+
+  const handleTouchEnd = useCallback((e) => {
+    clearTimeout(longPress.current.timer)
+    // swallow the synthetic click after a long-press flag
+    if (longPress.current.fired && e.cancelable) e.preventDefault()
+    // brief delay covers Android's late contextmenu, then frees
+    // real right-clicks on hybrid touch+mouse devices
+    setTimeout(() => { longPress.current.fired = false }, 100)
+  }, [])
 
   const reset = () => {
     setBoard(createBoard())
@@ -135,7 +167,14 @@ export default function Minesweeper() {
       {/* Header bar */}
       <div style={styles.header}>
         <div style={styles.counter}>{padNum(MINES - flagCount)}</div>
-        <button style={styles.faceBtn} onClick={reset}>{face}</button>
+        <div style={{ display: 'flex', gap: 4 }}>
+          <button style={styles.faceBtn} onClick={reset}>{face}</button>
+          <button
+            style={{ ...styles.faceBtn, ...(flagMode ? styles.flagBtnActive : {}) }}
+            title={flagMode ? 'Flag mode ON — taps place flags' : 'Toggle flag mode'}
+            onClick={() => setFlagMode(f => !f)}
+          >🚩</button>
+        </div>
         <div style={styles.counter}>{padNum(time)}</div>
       </div>
 
@@ -148,6 +187,9 @@ export default function Minesweeper() {
                 key={c}
                 onClick={() => handleClick(r, c)}
                 onContextMenu={(e) => handleRightClick(e, r, c)}
+                onTouchStart={() => handleTouchStart(r, c)}
+                onTouchEnd={handleTouchEnd}
+                onTouchMove={() => clearTimeout(longPress.current.timer)}
                 onMouseDown={() => { if (!gameOver && !won) setFace('😮') }}
                 onMouseUp={() => { if (!gameOver && !won) setFace('🙂') }}
                 style={{
@@ -179,6 +221,10 @@ export default function Minesweeper() {
           {' '}
           <button onClick={reset} style={styles.replayBtn}>Play again</button>
         </div>
+      )}
+
+      {IS_TOUCH && !gameOver && !won && (
+        <div style={styles.hint}>Long-press or use 🚩 mode to flag</div>
       )}
     </div>
   )
@@ -251,6 +297,11 @@ const styles = {
     fontFamily: "'Arial', sans-serif",
     border: 'none',
     outline: 'none',
+    touchAction: 'manipulation',
+    userSelect: 'none',
+    WebkitUserSelect: 'none',
+    WebkitTouchCallout: 'none',
+    WebkitTapHighlightColor: 'transparent',
   },
   cellHidden: {
     border: '2px outset #fff',
@@ -262,6 +313,15 @@ const styles = {
   },
   cellMineHit: {
     background: '#ff4444',
+  },
+  flagBtnActive: {
+    border: '2px inset #fff',
+    background: '#ffe9a8',
+  },
+  hint: {
+    marginTop: 8,
+    fontSize: 10,
+    color: '#777',
   },
   message: {
     marginTop: 10,

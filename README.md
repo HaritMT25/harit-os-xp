@@ -16,7 +16,7 @@ npm run dev             # http://localhost:3000
 
 **Dual-Mode Interface**
 - Landing page with Quick View (~30s) and Full XP Experience (~5min) options
-- Mobile auto-routes to Quick View; XP mode is desktop-only
+- Fully responsive — both modes work on phones and tablets. In XP mode, apps open full screen, desktop icons re-grid, the taskbar adapts, and everything is touch-draggable
 - URL hash routing (`#quick`, `#xp`) for deep linking
 - Seamless switching: Log Off → Quick View, Shut Down → Landing (with animation)
 
@@ -51,6 +51,12 @@ npm run dev             # http://localhost:3000
 - React.memo on window wrappers to prevent cascade re-renders
 - Error boundaries per window — one crashed app won't kill the desktop
 - XP chunks prefetch while user is on the landing page
+
+**Mobile / Responsive**
+- `dvh`-based viewport sizing — the taskbar stays visible as the mobile URL bar collapses
+- Windows auto-maximize on phones and clamp to the viewport on tablets/small laptops
+- Desktop icons auto-arrange into a grid on small screens and reflow on rotation
+- Long-press (or 🚩 mode) to flag in Minesweeper; 16px inputs to prevent iOS focus zoom
 
 ## Configuration
 

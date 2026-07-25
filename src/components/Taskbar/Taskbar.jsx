@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import APP_REGISTRY, { START_MENU_APPS } from '../../data/app-registry'
+import { useViewportSize } from '../../hooks/useViewport'
 
 const QUICK_LINKS = [
   { label: 'My Documents', icon: '📂' },
@@ -7,17 +8,19 @@ const QUICK_LINKS = [
   { label: 'My Music', icon: '🎵' },
 ]
 
-export default function Taskbar({ windows, windowOrder, onOpenWindow, onTaskbarClick, onNavigate }) {
+export default function Taskbar({ windows, windowOrder, onOpenWindow, onTaskbarClick, onShowDesktop, onNavigate }) {
   const [startOpen, setStartOpen] = useState(false)
   const [time, setTime] = useState(new Date())
   const startRef = useRef(null)
+  const { w: vw } = useViewportSize()
+  const narrow = vw < 560
 
   useEffect(() => {
     const interval = setInterval(() => setTime(new Date()), 30000)
     return () => clearInterval(interval)
   }, [])
 
-  // Close start menu when clicking outside
+  // Close start menu when clicking/tapping outside
   useEffect(() => {
     if (!startOpen) return
     const handleClick = (e) => {
@@ -26,7 +29,11 @@ export default function Taskbar({ windows, windowOrder, onOpenWindow, onTaskbarC
       }
     }
     document.addEventListener('mousedown', handleClick)
-    return () => document.removeEventListener('mousedown', handleClick)
+    document.addEventListener('touchstart', handleClick)
+    return () => {
+      document.removeEventListener('mousedown', handleClick)
+      document.removeEventListener('touchstart', handleClick)
+    }
   }, [startOpen])
 
   const handleStartClick = useCallback(() => {
@@ -134,14 +141,16 @@ export default function Taskbar({ windows, windowOrder, onOpenWindow, onTaskbarC
           <span style={styles.startLabel}>start</span>
         </button>
 
-        {/* Quick Launch */}
-        <div style={styles.quickLaunch}>
-          <div style={styles.qlDivider} />
-          <button style={styles.qlButton} title="Show Desktop" onClick={() => {}}>🖥️</button>
-          <button style={styles.qlButton} title="Terminal" onClick={() => onOpenWindow('terminal')}>💻</button>
-          <button style={styles.qlButton} title="Projects" onClick={() => onOpenWindow('projects')}>📁</button>
-          <div style={styles.qlDivider} />
-        </div>
+        {/* Quick Launch — hidden on narrow screens to leave room for tabs */}
+        {!narrow && (
+          <div style={styles.quickLaunch}>
+            <div style={styles.qlDivider} />
+            <button style={styles.qlButton} title="Show Desktop" onClick={() => onShowDesktop && onShowDesktop()}>🖥️</button>
+            <button style={styles.qlButton} title="Terminal" onClick={() => onOpenWindow('terminal')}>💻</button>
+            <button style={styles.qlButton} title="Projects" onClick={() => onOpenWindow('projects')}>📁</button>
+            <div style={styles.qlDivider} />
+          </div>
+        )}
 
         {/* Window Tabs */}
         <div style={styles.windowTabs}>
@@ -173,13 +182,17 @@ export default function Taskbar({ windows, windowOrder, onOpenWindow, onTaskbarC
           })}
         </div>
 
-        {/* System Tray */}
+        {/* System Tray — decorative icons dropped on narrow screens */}
         <div style={styles.systemTray}>
           <div style={styles.trayIcons}>
             <span style={{ ...styles.trayIcon, cursor: 'pointer' }} title="Switch to Quick Portfolio" onClick={() => onNavigate && onNavigate('quick')}>📋</span>
-            <span style={styles.trayIcon} title="Volume">🔊</span>
-            <span style={styles.trayIcon} title="Network">🌐</span>
-            <span style={styles.trayIcon} title="Security">🛡️</span>
+            {!narrow && (
+              <>
+                <span style={styles.trayIcon} title="Volume">🔊</span>
+                <span style={styles.trayIcon} title="Network">🌐</span>
+                <span style={styles.trayIcon} title="Security">🛡️</span>
+              </>
+            )}
           </div>
           <div style={styles.clock}>
             {time.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
@@ -354,7 +367,10 @@ const styles = {
     position: 'fixed',
     bottom: 40,
     left: 0,
-    width: 380,
+    width: 'min(380px, 100vw)',
+    maxHeight: 'calc(100dvh - 48px)',
+    display: 'flex',
+    flexDirection: 'column',
     zIndex: 9999,
     background: '#fff',
     borderRadius: '8px 8px 0 0',
@@ -369,6 +385,7 @@ const styles = {
     display: 'flex',
     alignItems: 'center',
     gap: 12,
+    flexShrink: 0,
   },
   startAvatar: {
     width: 48,
@@ -399,18 +416,21 @@ const styles = {
   },
   startBody: {
     display: 'flex',
-    minHeight: 260,
+    minHeight: 0,
+    flex: 1,
   },
   startLeft: {
     flex: 1,
     padding: '6px 0',
     borderRight: '1px solid #d6d2c2',
     background: '#fff',
+    overflowY: 'auto',
   },
   startRight: {
     width: 150,
     padding: '6px 0',
     background: '#d3e5fa',
+    overflowY: 'auto',
   },
   quickLink: {
     display: 'flex',
@@ -433,6 +453,7 @@ const styles = {
     display: 'flex',
     justifyContent: 'flex-end',
     gap: 8,
+    flexShrink: 0,
   },
   footerBtn: {
     display: 'flex',

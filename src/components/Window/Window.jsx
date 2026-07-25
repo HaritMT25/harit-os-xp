@@ -1,6 +1,12 @@
 import { useRef, useCallback, useState, useEffect } from 'react'
 import { getWindowTitle } from '../../data/app-registry'
 import { startDrag } from '../../hooks/startDrag'
+import { DESKTOP_HEIGHT, isCoarsePointer } from '../../hooks/useViewport'
+
+// larger touch targets on phones/tablets
+const IS_COARSE = isCoarsePointer()
+const TITLEBAR_HEIGHT = IS_COARSE ? 36 : 30
+const TITLE_BTN_SIZE = IS_COARSE ? 28 : 22
 
 export default function Window({
   id, windowState, zIndex, isActive,
@@ -83,16 +89,19 @@ export default function Window({
 
   const anim = closing ? 'windowClose' : animState === 'opening' ? 'windowOpen' : 'none'
 
+  // maximized geometry lives in CSS so it tracks viewport changes
+  // (mobile URL bar collapse, rotation, keyboard) without JS resize math
+  const frame = maximized
+    ? { left: 0, top: 0, width: '100%', height: DESKTOP_HEIGHT }
+    : { left: position.x, top: position.y, width: size.w, height: size.h }
+
   return (
     <div
       ref={windowRef}
       onClick={() => onFocus(id)}
       style={{
         position: 'fixed',
-        left: position.x,
-        top: position.y,
-        width: size.w,
-        height: size.h,
+        ...frame,
         zIndex,
         display: 'flex',
         flexDirection: 'column',
@@ -117,12 +126,13 @@ export default function Window({
           background: isActive
             ? 'var(--xp-titlebar-active)'
             : 'var(--xp-titlebar-inactive)',
-          height: 30,
+          height: TITLEBAR_HEIGHT,
           display: 'flex',
           alignItems: 'center',
           padding: '0 4px 0 6px',
           cursor: maximized ? 'default' : 'move',
           flexShrink: 0,
+          touchAction: 'none',
         }}
       >
         <span style={{ fontSize: 14, marginRight: 4, filter: 'drop-shadow(1px 1px 1px rgba(0,0,0,0.3))' }}>
@@ -231,8 +241,8 @@ function TitleButton({ icon, onClick, type }) {
       onMouseEnter={() => setHover(true)}
       onMouseLeave={() => setHover(false)}
       style={{
-        width: 22,
-        height: 22,
+        width: TITLE_BTN_SIZE,
+        height: TITLE_BTN_SIZE,
         border: `1px solid ${isClose ? 'rgba(100,0,0,0.4)' : 'rgba(0,0,80,0.3)'}`,
         borderRadius: 3,
         background: hover

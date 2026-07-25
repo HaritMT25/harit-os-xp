@@ -1,5 +1,6 @@
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useEffect } from 'react'
 import { getWindowDefaults } from '../data/app-registry'
+import { isMobileViewport, fitToViewport } from './useViewport'
 
 export function useWindowManager() {
   const [windows, setWindows] = useState({})
@@ -7,7 +8,7 @@ export function useWindowManager() {
   const [windowOrder, setWindowOrder] = useState([])
 
   const openWindow = useCallback((id) => {
-    const isMobile = window.innerWidth < 768
+    const isMobile = isMobileViewport()
     setWindows(prev => {
       if (prev[id]) {
         // Already open — just unminimize and focus
@@ -16,22 +17,60 @@ export function useWindowManager() {
           [id]: { ...prev[id], minimized: false },
         }
       }
-      // New window — auto-maximize on mobile
+      // New window — auto-maximize on mobile, fit to viewport elsewhere
+      // (registry defaults can exceed small laptop/tablet screens)
       const { position: defaultPos, size: defaultSize } = getWindowDefaults(id)
+      const fitted = fitToViewport(defaultPos, defaultSize)
       return {
         ...prev,
         [id]: {
           id,
-          position: isMobile ? { x: 0, y: 0 } : defaultPos,
-          size: isMobile ? { w: window.innerWidth, h: window.innerHeight - 38 } : defaultSize,
+          position: fitted.position,
+          size: fitted.size,
           minimized: false,
           maximized: isMobile,
           closing: false,
-          ...(isMobile && { prevPosition: defaultPos, prevSize: defaultSize }),
+          ...(isMobile && { prevPosition: fitted.position, prevSize: fitted.size }),
         },
       }
     })
     setWindowOrder(prev => [...prev.filter(w => w !== id), id])
+  }, [])
+
+  // Keep non-maximized windows on screen when the viewport shrinks
+  // (rotation, browser resize). Maximized windows track the viewport
+  // via CSS, so they need no correction here.
+  useEffect(() => {
+    let timer
+    const onResize = () => {
+      clearTimeout(timer)
+      timer = setTimeout(() => {
+        setWindows(prev => {
+          let changed = false
+          const next = { ...prev }
+          for (const id of Object.keys(next)) {
+            const win = next[id]
+            if (win.maximized) continue
+            const fitted = fitToViewport(win.position, win.size)
+            if (
+              fitted.position.x !== win.position.x ||
+              fitted.position.y !== win.position.y ||
+              fitted.size.w !== win.size.w ||
+              fitted.size.h !== win.size.h
+            ) {
+              next[id] = { ...win, position: fitted.position, size: fitted.size }
+              changed = true
+            }
+          }
+          return changed ? next : prev
+        })
+      }, 150)
+    }
+    window.addEventListener('resize', onResize)
+    return () => {
+      clearTimeout(timer)
+      window.removeEventListener('resize', onResize)
+    }
   }, [])
 
   const closeWindow = useCallback((id) => {
@@ -76,6 +115,8 @@ export function useWindowManager() {
           },
         }
       }
+      // maximized geometry is CSS-driven (tracks the live viewport),
+      // so only the restore snapshot is stored here
       return {
         ...prev,
         [id]: {
@@ -83,13 +124,21 @@ export function useWindowManager() {
           maximized: true,
           prevPosition: { ...win.position },
           prevSize: { ...win.size },
-          position: { x: 0, y: 0 },
-          size: { w: window.innerWidth, h: window.innerHeight - 38 },
         },
       }
     })
     focusWindow(id)
   }, [focusWindow])
+
+  const minimizeAll = useCallback(() => {
+    setWindows(prev => {
+      const next = {}
+      for (const [id, win] of Object.entries(prev)) {
+        next[id] = { ...win, minimized: true }
+      }
+      return next
+    })
+  }, [])
 
   const moveWindow = useCallback((id, position) => {
     setWindows(prev => ({
@@ -132,6 +181,7 @@ export function useWindowManager() {
     closeWindow,
     focusWindow,
     minimizeWindow,
+    minimizeAll,
     toggleMaximize,
     moveWindow,
     resizeWindow,

@@ -1,5 +1,7 @@
 import { useState } from 'react'
 
+const IS_TOUCH = typeof window !== 'undefined' && 'ontouchstart' in window
+
 export default function WelcomeDialog({ onClose }) {
   const [tab, setTab] = useState('welcome')
 
@@ -52,18 +54,33 @@ export default function WelcomeDialog({ onClose }) {
                 Double-click the desktop icons or use the Start menu to explore.
               </p>
               <div style={styles.tips}>
-                <div style={styles.tip}>
-                  <span style={styles.tipIcon}>🖱️</span>
-                  <span><b>Double-click</b> desktop icons to open apps</span>
-                </div>
-                <div style={styles.tip}>
-                  <span style={styles.tipIcon}>📌</span>
-                  <span><b>Drag</b> window title bars to move them</span>
-                </div>
-                <div style={styles.tip}>
-                  <span style={styles.tipIcon}>↔️</span>
-                  <span><b>Resize</b> windows from any edge or corner</span>
-                </div>
+                {IS_TOUCH ? (
+                  <>
+                    <div style={styles.tip}>
+                      <span style={styles.tipIcon}>👆</span>
+                      <span><b>Tap</b> desktop icons to open apps — they open full screen</span>
+                    </div>
+                    <div style={styles.tip}>
+                      <span style={styles.tipIcon}>📌</span>
+                      <span>Use the <b>taskbar</b> at the bottom to switch between apps</span>
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <div style={styles.tip}>
+                      <span style={styles.tipIcon}>🖱️</span>
+                      <span><b>Double-click</b> desktop icons to open apps</span>
+                    </div>
+                    <div style={styles.tip}>
+                      <span style={styles.tipIcon}>📌</span>
+                      <span><b>Drag</b> window title bars to move them</span>
+                    </div>
+                    <div style={styles.tip}>
+                      <span style={styles.tipIcon}>↔️</span>
+                      <span><b>Resize</b> windows from any edge or corner</span>
+                    </div>
+                  </>
+                )}
                 <div style={styles.tip}>
                   <span style={styles.tipIcon}>💻</span>
                   <span>Try the <b>Terminal</b> — type <code style={styles.code}>help</code> or <code style={styles.code}>theme silver</code></span>
@@ -74,7 +91,7 @@ export default function WelcomeDialog({ onClose }) {
                 </div>
                 <div style={styles.tip}>
                   <span style={styles.tipIcon}>💣</span>
-                  <span>Take a break with <b>Minesweeper</b> (right-click to flag)</span>
+                  <span>Take a break with <b>Minesweeper</b> ({IS_TOUCH ? 'long-press to flag' : 'right-click to flag'})</span>
                 </div>
               </div>
             </div>
@@ -142,9 +159,13 @@ const styles = {
     justifyContent: 'center',
     zIndex: 50000,
     animation: 'fadeIn 0.2s',
+    padding: 12,
   },
   dialog: {
-    width: 460,
+    width: 'min(460px, 100%)',
+    maxHeight: '100%',
+    display: 'flex',
+    flexDirection: 'column',
     background: 'var(--xp-surface)',
     borderRadius: '8px 8px 4px 4px',
     boxShadow: '0 6px 30px rgba(0, 0, 0, 0.5)',
@@ -157,6 +178,7 @@ const styles = {
     display: 'flex',
     alignItems: 'center',
     gap: 6,
+    flexShrink: 0,
   },
   titleIcon: { fontSize: 14 },
   titleText: {
@@ -186,6 +208,7 @@ const styles = {
     padding: '4px 8px 0',
     display: 'flex',
     gap: 1,
+    flexShrink: 0,
   },
   tab: {
     padding: '5px 16px',
@@ -211,7 +234,8 @@ const styles = {
     border: '1px solid #a0a0a0',
     margin: '0 8px',
     background: '#fff',
-    minHeight: 280,
+    minHeight: 0,
+    flex: 1,
     overflow: 'auto',
   },
 
@@ -298,6 +322,7 @@ const styles = {
     display: 'flex',
     justifyContent: 'space-between',
     alignItems: 'center',
+    flexShrink: 0,
   },
   checkLabel: {
     display: 'flex',

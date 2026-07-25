@@ -1,9 +1,12 @@
 import { useState } from 'react'
 import { projects } from '../data/resume-data'
+import { useViewportSize } from '../hooks/useViewport'
 
 export default function ProjectExplorer() {
   const [selectedProject, setSelectedProject] = useState(null)
   const [viewMode, setViewMode] = useState('tiles') // tiles or details
+  const { w } = useViewportSize()
+  const narrow = w < 520
 
   const project = selectedProject !== null ? projects[selectedProject] : null
 
@@ -14,6 +17,11 @@ export default function ProjectExplorer() {
         <button style={{ ...styles.navBtn, opacity: project ? 1 : 0.4 }} onClick={() => setSelectedProject(null)}>◀</button>
         <button style={{ ...styles.navBtn, opacity: 0.4 }}>▶</button>
         <button style={styles.navBtn} onClick={() => setSelectedProject(null)}>🏠</button>
+        <button
+          style={styles.navBtn}
+          title={`Switch to ${viewMode === 'tiles' ? 'details' : 'tiles'} view`}
+          onClick={() => setViewMode(viewMode === 'tiles' ? 'details' : 'tiles')}
+        >{viewMode === 'tiles' ? '☰' : '▦'}</button>
         <div style={styles.addressInput}>
           <span style={styles.addressIcon}>📁</span>
           <span style={styles.addressText}>
@@ -23,7 +31,8 @@ export default function ProjectExplorer() {
       </div>
 
       <div style={styles.body}>
-        {/* Sidebar */}
+        {/* Sidebar — hidden on narrow screens, its actions live in the address bar */}
+        {!narrow && (
         <div style={styles.sidebar}>
           <div style={styles.sideSection}>
             <div style={styles.sideSectionHeader}>
@@ -52,6 +61,7 @@ export default function ProjectExplorer() {
             </div>
           </div>
         </div>
+        )}
 
         {/* Main content */}
         <div style={styles.main}>
@@ -62,7 +72,7 @@ export default function ProjectExplorer() {
                 viewMode === 'tiles' ? (
                   <ProjectTile key={i} project={p} onClick={() => setSelectedProject(i)} />
                 ) : (
-                  <ProjectRow key={i} project={p} onClick={() => setSelectedProject(i)} />
+                  <ProjectRow key={i} project={p} narrow={narrow} onClick={() => setSelectedProject(i)} />
                 )
               ))}
             </div>
@@ -112,7 +122,7 @@ function ProjectTile({ project, onClick }) {
   )
 }
 
-function ProjectRow({ project, onClick }) {
+function ProjectRow({ project, narrow, onClick }) {
   const [hover, setHover] = useState(false)
   return (
     <div
@@ -128,7 +138,9 @@ function ProjectRow({ project, onClick }) {
       <span style={{ fontSize: 16, width: 24 }}>{project.icon}</span>
       <span style={{ flex: 1, fontWeight: 600 }}>{project.name}</span>
       <span style={{ width: 60, fontSize: 10, textAlign: 'center' }}>{project.status}</span>
-      <span style={{ width: 180, fontSize: 10, color: hover ? '#cce' : '#888' }}>{project.tech.slice(0, 3).join(', ')}</span>
+      {!narrow && (
+        <span style={{ width: 180, fontSize: 10, color: hover ? '#cce' : '#888' }}>{project.tech.slice(0, 3).join(', ')}</span>
+      )}
     </div>
   )
 }

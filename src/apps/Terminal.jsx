@@ -1,6 +1,11 @@
 import { useState, useRef, useEffect } from 'react'
 import { personalInfo, projects, skills, experience, education } from '../data/resume-data'
 import { THEME_NAMES, getCurrentTheme, applyTheme } from '../data/themes'
+import { isCoarsePointer } from '../hooks/useViewport'
+
+// ≥16px on touch devices or iOS zooms in when the input is focused
+const FONT_SIZE = isCoarsePointer() ? 16 : 13
+const LINE_HEIGHT = isCoarsePointer() ? 24 : 18
 
 const COMMANDS = {
   help: () => [
@@ -265,6 +270,9 @@ export default function Terminal() {
             style={styles.inputField}
             spellCheck={false}
             autoComplete="off"
+            autoCapitalize="none"
+            autoCorrect="off"
+            enterKeyHint="go"
           />
         </div>
         <div ref={bottomRef} />
@@ -278,20 +286,21 @@ const styles = {
     height: '100%',
     background: '#0c0c0c',
     fontFamily: "'Consolas', 'Courier New', monospace",
-    fontSize: 13,
+    fontSize: FONT_SIZE,
     cursor: 'text',
     overflow: 'hidden',
   },
   scrollArea: {
     height: '100%',
     overflowY: 'auto',
+    overflowX: 'auto',
     padding: '8px 10px',
   },
   inputLine: {
     display: 'flex',
     alignItems: 'center',
     whiteSpace: 'pre',
-    minHeight: 18,
+    minHeight: LINE_HEIGHT,
   },
   prompt: {
     color: '#c0c0c0',
@@ -304,19 +313,20 @@ const styles = {
   outputLine: {
     color: '#cccccc',
     whiteSpace: 'pre',
-    minHeight: 18,
-    lineHeight: '18px',
+    minHeight: LINE_HEIGHT,
+    lineHeight: `${LINE_HEIGHT}px`,
   },
   inputField: {
     background: 'transparent',
     border: 'none',
     color: '#f0f0f0',
     fontFamily: "'Consolas', 'Courier New', monospace",
-    fontSize: 13,
+    fontSize: FONT_SIZE,
     outline: 'none',
     flex: 1,
     padding: 0,
     margin: 0,
     caretColor: '#ccc',
+    minWidth: 80,
   },
 }

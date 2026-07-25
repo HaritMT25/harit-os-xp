@@ -1,6 +1,7 @@
-import { useState, useCallback, useRef } from 'react'
+import { useState, useCallback, useRef, useEffect } from 'react'
 import { DESKTOP_APPS } from '../../data/app-registry'
 import { startDrag } from '../../hooks/startDrag'
+import { TASKBAR_HEIGHT, MOBILE_BREAKPOINT, useViewportSize } from '../../hooks/useViewport'
 
 // Build icon config from registry
 const DESKTOP_ICONS = DESKTOP_APPS.map(app => ({
@@ -12,20 +13,62 @@ const DESKTOP_ICONS = DESKTOP_APPS.map(app => ({
   fromRight: app.desktop.fromRight || false,
 }))
 
-export default function Desktop({ onOpenWindow }) {
-  const [positions, setPositions] = useState(() => {
-    const pos = {}
+const ICON_W = 80
+const ICON_H = 84
+
+// Registry positions on desktop; auto-flowing grid on small screens
+// (registry x/y assume a wide viewport and would overlap or overflow)
+function computeLayout(vw, vh) {
+  const pos = {}
+  if (vw < MOBILE_BREAKPOINT) {
+    const perCol = Math.max(3, Math.floor((vh - TASKBAR_HEIGHT - 16) / ICON_H))
+    DESKTOP_ICONS.forEach((icon, i) => {
+      pos[icon.id] = {
+        x: 8 + Math.floor(i / perCol) * (ICON_W + 12),
+        y: 8 + (i % perCol) * ICON_H,
+      }
+    })
+  } else {
     DESKTOP_ICONS.forEach(icon => {
       pos[icon.id] = {
-        x: icon.fromRight ? window.innerWidth + icon.x : icon.x,
+        x: icon.fromRight ? vw + icon.x : icon.x,
         y: icon.y,
       }
     })
-    return pos
-  })
+  }
+  return pos
+}
+
+export default function Desktop({ onOpenWindow }) {
+  const { w: vw, h: vh } = useViewportSize()
+  const [positions, setPositions] = useState(() =>
+    computeLayout(window.innerWidth, window.innerHeight)
+  )
   const [selectedIcon, setSelectedIcon] = useState(null)
   const [contextMenu, setContextMenu] = useState(null)
   const dragRef = useRef(null)
+  // icons the user has dragged — keep their placement across resizes
+  const movedRef = useRef(new Set())
+
+  // Relayout on resize/rotation: auto-arranged icons reflow, user-moved
+  // icons are clamped back into the visible area
+  useEffect(() => {
+    setPositions(prev => {
+      const base = computeLayout(vw, vh)
+      const next = {}
+      for (const icon of DESKTOP_ICONS) {
+        if (vw >= MOBILE_BREAKPOINT && movedRef.current.has(icon.id) && prev[icon.id]) {
+          next[icon.id] = {
+            x: Math.max(0, Math.min(prev[icon.id].x, vw - ICON_W)),
+            y: Math.max(0, Math.min(prev[icon.id].y, vh - TASKBAR_HEIGHT - ICON_H)),
+          }
+        } else {
+          next[icon.id] = base[icon.id]
+        }
+      }
+      return next
+    })
+  }, [vw, vh])
 
   const handleContextMenu = useCallback((e) => {
     e.preventDefault()
@@ -63,6 +106,7 @@ export default function Desktop({ onOpenWindow }) {
         }))
       },
       onEnd({ moved }) {
+        if (moved) movedRef.current.add(id)
         if (isTouch && !moved) onOpenWindow(id)
         dragRef.current = moved ? 'dragged' : null
       },
@@ -181,7 +225,7 @@ const styles = {
   iconItem: {
     width: 80, padding: '8px 4px 6px', display: 'flex', flexDirection: 'column',
     alignItems: 'center', gap: 4, cursor: 'pointer', borderRadius: 3, textAlign: 'center',
-    zIndex: 1, userSelect: 'none',
+    zIndex: 1, userSelect: 'none', touchAction: 'none', WebkitTapHighlightColor: 'transparent',
   },
   iconEmoji: {
     width: 40, height: 40, display: 'flex', alignItems: 'center', justifyContent: 'center',

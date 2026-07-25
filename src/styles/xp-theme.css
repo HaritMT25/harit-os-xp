@@ -238,14 +238,39 @@
 /* prevent flex children from collapsing on Safari */
 img, svg, button { flex-shrink: 0; }
 
-/* fix Safari viewport height on iOS */
+/* track the *visible* viewport on mobile (URL bar collapse) */
 html, body, #root {
   min-height: 100vh;
-  min-height: -webkit-fill-available;
+  min-height: 100dvh;
 }
 
 /* prevent iOS text size adjustment */
 body { -webkit-text-size-adjust: 100%; }
 
+/* no pull-to-refresh / rubber-band while dragging windows */
+body { overscroll-behavior: none; }
+
 /* fix iOS touch delay */
 button, [role="button"] { touch-action: manipulation; }
+
+/* ---- TOUCH DEVICES ---- */
+@media (pointer: coarse) {
+  /* slim scrollbars — 17px XP bars eat too much of a phone screen */
+  ::-webkit-scrollbar { width: 8px; height: 8px; }
+  ::-webkit-scrollbar-button:vertical:start:decrement,
+  ::-webkit-scrollbar-button:vertical:end:increment { display: none; }
+
+  /* inputs below 16px trigger auto-zoom on iOS Safari */
+  input:not([type=checkbox]):not([type=radio]):not([type=range]),
+  textarea,
+  select {
+    font-size: 16px !important;
+  }
+}
+
+/* ---- UTILITIES ---- */
+.hide-scrollbar {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+.hide-scrollbar::-webkit-scrollbar { display: none; }

@@ -86,7 +86,7 @@ export default function LandingPage({ onChoose }) {
             <div style={styles.cardMeta}>~5 minutes</div>
             {typeof window !== 'undefined' && window.innerWidth < 768 && (
               <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.3)', marginTop: 8 }}>
-                Best on desktop · works on mobile
+                Touch-friendly · apps open full screen
               </div>
             )}
           </div>
@@ -110,10 +110,12 @@ const styles = {
     position: 'fixed',
     inset: 0,
     display: 'flex',
-    alignItems: 'center',
     justifyContent: 'center',
     fontFamily: "'Segoe UI', 'Tahoma', sans-serif",
-    overflow: 'hidden',
+    // scrolls instead of clipping on short screens (landscape phones);
+    // content margin:auto keeps it centered when there is room
+    overflowY: 'auto',
+    overflowX: 'hidden',
   },
   bg: {
     position: 'absolute',
@@ -135,14 +137,15 @@ const styles = {
     position: 'relative',
     zIndex: 1,
     textAlign: 'center',
-    padding: '24px',
+    padding: '32px 24px',
     maxWidth: 700,
     width: '100%',
+    margin: 'auto',
     animation: 'fadeIn 0.8s ease-out',
   },
 
   logoArea: {
-    marginBottom: 40,
+    marginBottom: 'clamp(24px, 5vh, 40px)',
   },
   logoFlag: {
     display: 'inline-grid',
@@ -159,7 +162,7 @@ const styles = {
   },
   logo: {
     margin: 0,
-    fontSize: 52,
+    fontSize: 'clamp(38px, 10vw, 52px)',
     fontWeight: 300,
     letterSpacing: -2,
     color: '#fff',
@@ -193,6 +196,7 @@ const styles = {
   },
   card: {
     width: 260,
+    maxWidth: '100%',
     padding: '32px 24px',
     borderRadius: 12,
     border: '1px solid',

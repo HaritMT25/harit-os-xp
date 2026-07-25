@@ -106,12 +106,12 @@ const styles = {
   },
   pageContainer: { flex: 1, overflow: 'auto', display: 'flex', justifyContent: 'center', padding: '20px 10px' },
   page: {
-    width: 540, 
-    minHeight: 700, 
-    height: 'max-content', // <-- Add this line
-    background: '#fff', 
+    width: 'min(540px, 100%)',
+    minHeight: 700,
+    height: 'max-content',
+    background: '#fff',
     boxShadow: '0 2px 12px rgba(0,0,0,0.4)',
-    padding: '36px 44px', 
+    padding: 'clamp(20px, 5vw, 36px) clamp(14px, 5vw, 44px)',
     flexShrink: 0,
   },
 
