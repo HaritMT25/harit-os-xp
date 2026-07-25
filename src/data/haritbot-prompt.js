@@ -1,4 +1,6 @@
-import { personalInfo, experience, projects, skills, education, publications } from './resume-data'
+// explicit .js extension — this module is also loaded by the api/chat.js
+// serverless function under native Node ESM, which requires it
+import { personalInfo, experience, projects, skills, education, publications } from './resume-data.js'
 
 // ─── HaritBot prompt + model config ──────────────────────
 // Shared by api/chat.js (the production serverless proxy) and the
