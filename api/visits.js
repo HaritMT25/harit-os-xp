@@ -12,12 +12,40 @@ function getRedis() {
   })
 }
 
+const regionNames = new Intl.DisplayNames(['en'], { type: 'region' })
+
+// x-vercel-ip-country is a 2-letter code; ipapi.co used to hand back a full name
+function countryName(code) {
+  if (!code || code.length !== 2) return 'Unknown'
+  try { return regionNames.of(code.toUpperCase()) || code } catch { return code }
+}
+
 function flagFromCode(code) {
   if (!code || code.length !== 2) return '🌍'
   return code.toUpperCase().split('').map(c => String.fromCodePoint(0x1f1e6 + c.charCodeAt(0) - 65)).join('')
 }
 
 function round(n) { return Math.round((Number(n) || 0) * 10) / 10 }
+
+// names are visitor-submitted and rendered on everyone's map — strip markup
+// at the write boundary so a bad record can never enter the list
+function cleanName(v) {
+  return String(v ?? '').replace(/[<>&"'`]/g, '').replace(/\s+/g, ' ').trim().slice(0, 24)
+}
+
+// one pin per IP per day; ltrim keeps 1000, so without this a script can
+// flush every real pin out of the list
+const POST_LIMIT = 3
+const POST_WINDOW = 24 * 60 * 60
+
+async function underPostLimit(redis, req) {
+  const ip = (req.headers['x-forwarded-for'] || '').split(',')[0].trim()
+    || req.socket?.remoteAddress || 'unknown'
+  const key = `harit:visit_rl:${ip}`
+  const n = await redis.incr(key)
+  if (n === 1) await redis.expire(key, POST_WINDOW)
+  return n <= POST_LIMIT
+}
 
 // Vercel populates these on every function invocation, all plans. Absent locally.
 function geoFromHeaders(req) {
@@ -27,7 +55,7 @@ function geoFromHeaders(req) {
   const lat = round(h['x-vercel-ip-latitude'])
   const lon = round(h['x-vercel-ip-longitude'])
   if (!lat && !lon) return null
-  return { city: city || 'Unknown', country: code || 'Unknown', lat, lon, flag: flagFromCode(code) }
+  return { city: city || 'Unknown', country: countryName(code), lat, lon, flag: flagFromCode(code) }
 }
 
 export default async function handler(req, res) {
@@ -45,9 +73,13 @@ export default async function handler(req, res) {
     await redis.connect()
 
     if (req.method === 'POST') {
+      if (!(await underPostLimit(redis, req))) {
+        redis.disconnect()
+        return res.status(429).json({ ok: false, error: 'rate_limited' })
+      }
       const body = req.body || {}
       const visit = {
-        name: String(body.name || '').trim().slice(0, 40) || 'Anonymous',
+        name: cleanName(body.name) || 'Anonymous',
         city: you?.city || body.city || 'Unknown',
         country: you?.country || body.country || 'Unknown',
         lat: you?.lat ?? round(body.lat),

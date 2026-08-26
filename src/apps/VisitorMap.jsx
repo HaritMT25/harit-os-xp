@@ -1,9 +1,21 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 
 const API_URL = '/api/visits'
-const TILE_URL = 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png'
+// CARTO now watermarks unauthenticated raster tiles. Key is free, domain-scoped,
+// and public by nature (the browser fetches the tiles) — not a secret like the Groq key.
+const CARTO_KEY = import.meta.env.VITE_CARTO_KEY || ''
+const TILE_URL = `https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png${CARTO_KEY ? `?key=${CARTO_KEY}` : ''}`
+const TILE_ATTRIB = '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>, &copy; <a href="https://carto.com/attributions">CARTO</a>'
 
 function roundCoord(n) { return Math.round((n || 0) * 10) / 10 }
+
+// popups are built as HTML strings for Leaflet, so anything from the API
+// must be escaped — names are visitor-submitted and served to everyone
+function esc(v) {
+  return String(v ?? '').replace(/[&<>"']/g, c => (
+    { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]
+  ))
+}
 
 async function safeFetchJson(url, opts) {
   try {
@@ -25,6 +37,7 @@ export default function VisitorMap() {
   const [loading, setLoading] = useState(true)
   const [name, setName] = useState(() => localStorage.getItem('harit_visitor_name') || '')
   const [named, setNamed] = useState(() => !!localStorage.getItem('harit_visitor_name'))
+  const [mapReady, setMapReady] = useState(false)
 
   // init map
   useEffect(() => {
@@ -35,10 +48,12 @@ export default function VisitorMap() {
       try {
         const map = L.map(mapRef.current, {
           center: [20, 0], zoom: 2, minZoom: 2, maxZoom: 10,
-          zoomControl: true, attributionControl: false,
+          zoomControl: true, attributionControl: true,
         })
-        L.tileLayer(TILE_URL, { subdomains: 'abcd', maxZoom: 19 }).addTo(map)
+        map.attributionControl.setPrefix(false)
+        L.tileLayer(TILE_URL, { subdomains: 'abcd', maxZoom: 19, attribution: TILE_ATTRIB }).addTo(map)
         mapInstanceRef.current = map
+        setMapReady(true)
         setTimeout(() => { if (map._container) map.invalidateSize() }, 200)
       } catch {}
     }).catch(() => {})
@@ -97,7 +112,7 @@ export default function VisitorMap() {
         })
         const m = L.marker([v.lat, v.lon], { icon }).addTo(map)
         const nameLabel = isNamed ? v.name : 'Anonymous'
-        m.bindPopup(`<div style="font-family:Tahoma,sans-serif;font-size:11px;min-width:90px"><strong>${v.flag || '🌍'} ${nameLabel}</strong><br>${v.city}, ${v.country}${v.count > 1 ? `<br><span style="color:#888">${v.count} visitors</span>` : ''}</div>`)
+        m.bindPopup(`<div style="font-family:Tahoma,sans-serif;font-size:11px;min-width:90px"><strong>${esc(v.flag || '🌍')} ${esc(nameLabel)}</strong><br>${esc(v.city)}, ${esc(v.country)}${v.count > 1 ? `<br><span style="color:#888">${Number(v.count)} visitors</span>` : ''}</div>`)
         markersRef.current.push(m)
       })
 
@@ -105,11 +120,11 @@ export default function VisitorMap() {
       if (myLocation && !pins.some(v => Math.abs(v.lat - myLocation.lat) < 1 && Math.abs(v.lon - myLocation.lon) < 1)) {
         const icon = L.divIcon({ className: '', html: '<div style="width:14px;height:14px;border-radius:50%;background:#ff4466;border:2px solid #fff;box-shadow:0 0 10px rgba(255,68,102,0.6)"></div>', iconSize: [14, 14], iconAnchor: [7, 7] })
         const m = L.marker([myLocation.lat, myLocation.lon], { icon }).addTo(map)
-        m.bindPopup(`<div style="font-family:Tahoma,sans-serif;font-size:11px"><strong>${myLocation.flag} You</strong><br>${myLocation.city}, ${myLocation.country}</div>`)
+        m.bindPopup(`<div style="font-family:Tahoma,sans-serif;font-size:11px"><strong>${esc(myLocation.flag)} You</strong><br>${esc(myLocation.city)}, ${esc(myLocation.country)}</div>`)
         markersRef.current.push(m)
       }
     }).catch(() => {})
-  }, [allVisits, myLocation])
+  }, [allVisits, myLocation, mapReady])
 
   // upgrade from anonymous to named
   const handleName = useCallback(() => {
