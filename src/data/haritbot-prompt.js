@@ -8,7 +8,7 @@ import { personalInfo, experience, projects, skills, education, publications } f
 // prompt server-side in production means the proxy can't be abused
 // as a general-purpose LLM endpoint.
 
-export const GROQ_MODEL = 'llama-3.3-70b-versatile'
+export const GROQ_MODEL = 'openai/gpt-oss-120b'
 export const GROQ_URL = 'https://api.groq.com/openai/v1/chat/completions'
 
 // builds the full resume context string for the system prompt

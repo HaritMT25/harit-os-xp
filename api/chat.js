@@ -14,7 +14,7 @@ const RATE_WINDOW = 60 * 60      // per hour
 const apiKey = () => process.env.GROQ_API_KEY || process.env.VITE_GROQ_API_KEY || ''
 
 function getRedis() {
-  const url = process.env.REDIS_URL || 'redis://localhost:6379'
+  const url = (process.env.REDIS_URL || 'redis://localhost:6379').trim()
   return new Redis(url, {
     maxRetriesPerRequest: 1,
     connectTimeout: 5000,
@@ -73,11 +73,15 @@ export default async function handler(req, res) {
         model: GROQ_MODEL,
         messages: [{ role: 'system', content: SYSTEM_PROMPT }, ...history],
         temperature: 0.7,
-        max_tokens: 512,
+        max_completion_tokens: 1024,
+        reasoning_effort: 'low',
+        include_reasoning: false,
       }),
     })
     if (!upstream.ok) {
-      return res.status(502).json({ error: 'upstream', status: upstream.status })
+      const detail = await upstream.json().catch(() => null)
+      console.error('groq', upstream.status, detail?.error?.message || '')
+      return res.status(502).json({ error: 'upstream', status: upstream.status, detail: detail?.error?.message })
     }
     const data = await upstream.json()
     return res.json({ reply: data.choices?.[0]?.message?.content || '' })

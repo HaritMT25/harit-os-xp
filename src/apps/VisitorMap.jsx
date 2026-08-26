@@ -1,13 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 
-const GEO_URL = 'https://ipapi.co/json/'
 const API_URL = '/api/visits'
 const TILE_URL = 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png'
-
-function getFlagEmoji(code) {
-  if (!code) return '🌍'
-  return code.toUpperCase().split('').map(c => String.fromCodePoint(0x1f1e6 + c.charCodeAt(0) - 65)).join('')
-}
 
 function roundCoord(n) { return Math.round((n || 0) * 10) / 10 }
 
@@ -54,19 +48,13 @@ export default function VisitorMap() {
   // geolocate (just for display, not registering — App.jsx handles that) + load visits
   useEffect(() => {
     let cancelled = false
-    safeFetchJson(GEO_URL).then(data => {
-      if (cancelled) return
-      if (data) {
-        setMyLocation({
-          city: data.city || 'Unknown', country: data.country_name || 'Earth',
-          lat: roundCoord(data.latitude), lon: roundCoord(data.longitude),
-          flag: getFlagEmoji(data.country_code),
-        })
-        try { if (mapInstanceRef.current) mapInstanceRef.current.flyTo([data.latitude, data.longitude], 4, { duration: 1.5 }) } catch {}
+    safeFetchJson(API_URL).then(data => {
+      if (cancelled || !data) return
+      setAllVisits(data.visits || [])
+      if (data.you) {
+        setMyLocation(data.you)
+        try { if (mapInstanceRef.current) mapInstanceRef.current.flyTo([data.you.lat, data.you.lon], 4, { duration: 1.5 }) } catch {}
       }
-    }).then(() => safeFetchJson(API_URL)).then(data => {
-      if (cancelled) return
-      if (data) setAllVisits(data.visits || [])
     }).finally(() => { if (!cancelled) setLoading(false) })
     return () => { cancelled = true }
   }, [])
@@ -129,7 +117,7 @@ export default function VisitorMap() {
     safeFetchJson(API_URL, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ name: name.trim(), city: myLocation.city, country: myLocation.country, lat: myLocation.lat, lon: myLocation.lon, flag: myLocation.flag, type: 'named' }),
+      body: JSON.stringify({ name: name.trim(), type: 'named' }),
     })
     localStorage.setItem('harit_visitor_name', name.trim())
     setNamed(true)

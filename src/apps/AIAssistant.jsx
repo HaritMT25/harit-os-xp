@@ -16,7 +16,9 @@ async function callGroqDirect(history) {
       model: GROQ_MODEL,
       messages: [{ role: 'system', content: SYSTEM_PROMPT }, ...history],
       temperature: 0.7,
-      max_tokens: 512,
+      max_completion_tokens: 1024,
+      reasoning_effort: 'low',
+      include_reasoning: false,
     }),
   })
   if (!response.ok) throw new Error('api')
