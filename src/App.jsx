@@ -7,6 +7,7 @@ import { useSounds } from './hooks/useSounds'
 import { on } from './hooks/eventBus'
 import { clearTheme } from './data/themes'
 import ErrorBoundary from './components/ErrorBoundary'
+import { initAnalytics, trackModeView } from './analytics'
 
 // ── Eager loads (needed immediately) ──
 import LandingPage from './components/LandingPage'
@@ -102,6 +103,9 @@ export default function App() {
   } = useWindowManager()
 
   useVisitorTracking()
+
+  useEffect(() => { initAnalytics() }, [])
+  useEffect(() => { trackModeView(mode) }, [mode])
 
   // ── Mode callbacks ──
   const handleChoose = useCallback((choice) => {
