@@ -1,6 +1,6 @@
 import { useState, useRef } from 'react'
 import { EVOBOIDS_URL as DEMO_URL } from '../data/demo-urls'
-import { useViewportSize, isCoarsePointer, MOBILE_BREAKPOINT } from '../hooks/useViewport'
+import { useViewportSize, isPhoneViewport } from '../hooks/useViewport'
 
 const ABOUT =
   'An artificial-life simulation in C++20: each fish carries a genome that wires a small ' +
@@ -16,39 +16,42 @@ const ABOUT =
 //
 // On a phone the window chrome takes about a third of the screen, so instead
 // of embedding, the window describes the demo and opens it full screen (the
-// demo has its own phone layout). "Run it in this window" still embeds.
+// demo has its own phone layout). "Run it in this window" still embeds. The
+// choice is made once, when the window opens: a later resize or rotation
+// never swaps a running simulation for the panel, or back.
 export default function EvoBoids() {
   const [loading, setLoading] = useState(true)
   const [nonce, setNonce] = useState(0)
-  const [embedHere, setEmbedHere] = useState(false)
+  const [launchPanel, setLaunchPanel] = useState(() => isPhoneViewport(window.innerWidth, window.innerHeight))
   const iframeRef = useRef(null)
   const { w, h } = useViewportSize()
   const live = !!DEMO_URL   // empty until the demo is deployed (see demo-urls.js)
-  // narrow screens, and touch screens whose short side is phone-sized
-  const phone = w < MOBILE_BREAKPOINT || (isCoarsePointer() && Math.min(w, h) < 600)
-  const embed = live && (!phone || embedHere)
+  const phone = isPhoneViewport(w, h)   // shorter toolbar labels
+  const embed = live && !launchPanel
+  const chrome = embed || !live         // the launch panel has its own buttons
 
   const openFull = () => window.open(DEMO_URL, '_blank', 'noopener,noreferrer')
   const reload = () => { setLoading(true); setNonce(n => n + 1) }
+  const runHere = () => { setLoading(true); setLaunchPanel(false) }
   const off = live ? {} : S.disabled
 
   return (
     <div style={S.container}>
       <div style={S.toolbar}>
         <span style={S.title}>🐟 evo_boids{phone ? '' : ' — evolving fish in your browser'}</span>
-        <div style={S.tools}>
-          {(embed || !live) && (
+        {chrome && (
+          <div style={S.tools}>
             <button style={{ ...S.btn, ...off }} onClick={reload} disabled={!live}
               title="Reload the simulation">🔄 Reload</button>
-          )}
-          <button style={{ ...S.btn, ...S.primary, ...off }} onClick={openFull} disabled={!live}
-            title="Open the demo in a new tab, where it can use every CPU thread">
-            {phone ? 'Open ↗' : 'Open full version ↗'}
-          </button>
-        </div>
+            <button style={{ ...S.btn, ...S.primary, ...off }} onClick={openFull} disabled={!live}
+              title="Open the demo in a new tab, where it can use every CPU thread">
+              {phone ? 'Open ↗' : 'Open full version ↗'}
+            </button>
+          </div>
+        )}
       </div>
 
-      {(embed || !live) && (
+      {chrome && (
         <div style={phone ? { ...S.info, ...S.oneLine } : S.info}>
           {live
             ? 'ℹ️ Runs single-threaded inside this window. The full version uses every CPU thread for bigger populations. Open the ☰ menu in the demo for settings; click a fish to see its brain.'
@@ -76,7 +79,7 @@ export default function EvoBoids() {
             </ul>
             <button style={S.launch} onClick={openFull}>▶ Open the demo</button>
             <div style={S.launchNote}>Opens full screen in a new tab.</div>
-            <button style={S.linkBtn} onClick={() => setEmbedHere(true)}>
+            <button style={S.linkBtn} onClick={runHere}>
               or run it in this window
             </button>
           </div>

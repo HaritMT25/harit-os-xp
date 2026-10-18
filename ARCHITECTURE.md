@@ -114,8 +114,9 @@ Desktop icons and window title bars handle both mouse and touch events through u
 - **Desktop icons** use registry positions on wide screens but auto-arrange into a column-flow grid below 768px, reflowing on rotation. User-dragged icons keep their placement (clamped on-screen).
 - **Taskbar** hides quick-launch and decorative tray icons below 560px to leave room for window tabs; the start menu caps at `min(380px, 100vw)` and scrolls when short on height.
 - **Inputs are ≥16px on coarse pointers** (via a CSS override) so iOS Safari doesn't auto-zoom on focus; the XP scrollbars slim from 17px to 8px on touch devices.
-- **Popups wait on phones**: below 768px every window is maximized, so `App.jsx` holds Clippy and the MSN popup (`hold` prop) while any window is open; one that came due shows when the last window closes or minimizes.
-- **EvoBoids.exe on phones** (narrow, or a touch screen with a short side under 600px) doesn't embed: the window chrome would take about a third of the screen. It describes the demo and opens it full screen in a new tab, where the demo's own phone layout applies; "run it in this window" still embeds.
+- **One phone test**: `isPhoneViewport(w, h)` in `useViewport.js` — narrower than 768px, or a touch screen whose short side is under 600px (a phone held sideways).
+- **Popups wait on phones**: an open window fills most of a phone screen, so `App.jsx` holds Clippy and the MSN popup (`hold` prop) while any window is open; one that came due shows when the last window closes or minimizes.
+- **EvoBoids.exe on phones** doesn't embed: the window chrome would take about a third of the screen. It describes the demo and opens it full screen in a new tab, where the demo's own phone layout applies; "run it in this window" still embeds. The choice is made when the window opens, so a resize never replaces a running simulation.
 - **Live demo links**: a project in `resume-data.js` names its demo by id (`demo: 'evoboids'`); `demo-urls.js` maps the id to a URL, and the same id is the app that runs it. `resume-data.js` stays free of `import.meta.env` because the HaritBot serverless function imports it under plain Node.
 
 ### Leaflet (Not react-leaflet)

@@ -1,5 +1,5 @@
-import { describe, it, expect, beforeEach } from 'vitest'
-import { fitToViewport, TASKBAR_HEIGHT } from './useViewport'
+import { describe, it, expect, beforeEach, afterEach } from 'vitest'
+import { fitToViewport, isPhoneViewport, TASKBAR_HEIGHT } from './useViewport'
 
 function setViewport(w, h) {
   Object.defineProperty(window, 'innerWidth', { value: w, configurable: true, writable: true })
@@ -32,5 +32,31 @@ describe('fitToViewport', () => {
     const { position } = fitToViewport({ x: -500, y: -50 }, { w: 400, h: 300 })
     expect(position.x).toBeGreaterThanOrEqual(0)
     expect(position.y).toBeGreaterThanOrEqual(0)
+  })
+})
+
+describe('isPhoneViewport', () => {
+  const realMatchMedia = window.matchMedia
+  const setCoarse = (coarse) => {
+    window.matchMedia = (q) => ({ matches: coarse && q === '(pointer: coarse)' })
+  }
+  afterEach(() => { window.matchMedia = realMatchMedia })
+
+  it('is true for narrow screens with any pointer', () => {
+    setCoarse(false)
+    expect(isPhoneViewport(390, 844)).toBe(true)
+  })
+
+  it('is true for a touch phone held sideways', () => {
+    setCoarse(true)
+    expect(isPhoneViewport(844, 390)).toBe(true)
+  })
+
+  it('is false for desktops and tablets', () => {
+    setCoarse(false)
+    expect(isPhoneViewport(844, 390)).toBe(false)   // a short desktop window, mouse
+    expect(isPhoneViewport(1400, 900)).toBe(false)
+    setCoarse(true)
+    expect(isPhoneViewport(1180, 820)).toBe(false)  // tablet, landscape
   })
 })

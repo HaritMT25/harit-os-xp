@@ -1,6 +1,6 @@
 import { useCallback, useEffect, lazy, Suspense, memo } from 'react'
 import { useWindowManager } from './hooks/useWindowManager'
-import { FULL_HEIGHT, MOBILE_BREAKPOINT, useViewportSize } from './hooks/useViewport'
+import { FULL_HEIGHT, isPhoneViewport, useViewportSize } from './hooks/useViewport'
 import { useAppMode } from './hooks/useAppMode'
 import { useVisitorTracking } from './hooks/useVisitorTracking'
 import { useSounds } from './hooks/useSounds'
@@ -104,10 +104,10 @@ export default function App() {
 
   useVisitorTracking()
 
-  // Narrow screens maximize every window, so Clippy and the MSN popup would
-  // cover the one in use: they wait until no window is open.
-  const { w: viewW } = useViewportSize()
-  const holdPopups = viewW < MOBILE_BREAKPOINT &&
+  // On a phone (either orientation) an open window fills most of the screen,
+  // so Clippy and the MSN popup would cover it: they wait until none is open.
+  const { w: viewW, h: viewH } = useViewportSize()
+  const holdPopups = isPhoneViewport(viewW, viewH) &&
     Object.values(windows).some(win => !win.minimized)
 
   useEffect(() => { initAnalytics() }, [])
