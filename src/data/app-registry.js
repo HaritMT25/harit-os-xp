@@ -104,6 +104,18 @@ const APP_REGISTRY = {
     startMenu: false,
     component: lazy(() => import('../apps/Notepad')),
   },
+  evoboids: {
+    id: 'evoboids',
+    label: 'EvoBoids',
+    windowTitle: 'EvoBoids.exe — Evolving Fish',
+    icon: '🐟',
+    desc: 'Live evolution simulation',
+    window: { position: { x: 70, y: 30 }, size: { w: 900, h: 600 } },
+    desktop: { x: -90, y: 332, fromRight: true },
+    desktopLabel: 'EvoBoids.exe',
+    startMenu: true,
+    component: lazy(() => import('../apps/EvoBoids')),
+  },
   minesweeper: {
     id: 'minesweeper',
     label: 'Minesweeper',
