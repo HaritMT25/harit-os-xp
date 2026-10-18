@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 
-export default function Clippy({ onOpenWindow, delay = 12000 }) {
+// hold: keep out of sight for now (shows once it is released, if due)
+export default function Clippy({ onOpenWindow, delay = 12000, hold = false }) {
   const [visible, setVisible] = useState(false)
   const [dismissed, setDismissed] = useState(false)
   const [message, setMessage] = useState(0)
@@ -48,7 +49,7 @@ export default function Clippy({ onOpenWindow, delay = 12000 }) {
     }
   }
 
-  if (dismissed || !visible) return null
+  if (dismissed || !visible || hold) return null
 
   const msg = MESSAGES[message]
 

@@ -40,7 +40,7 @@ npm run dev             # http://localhost:3000
 | 🤖 HaritBot | AI assistant powered by Groq (Llama 3.3) with full RAG context |
 | 💻 Terminal | Interactive shell with 15+ commands, arrow-key history |
 | 🌐 Internet Explorer | Embed live project demos via iframe |
-| 🐟 EvoBoids.exe | The evo_boids evolution simulation (C++ → WebAssembly) in a window, with an "Open full version" link |
+| 🐟 EvoBoids.exe | The evo_boids evolution simulation (C++ → WebAssembly) in a window, with an "Open full version" link. On phones it describes the demo and opens it full screen instead (or runs it in the window on request) |
 | 📝 Notepad | Editable text app |
 | 💣 Minesweeper | Working 9×9 game with timer and flag counter |
 
@@ -60,6 +60,8 @@ npm run dev             # http://localhost:3000
 - Windows auto-maximize on phones and clamp to the viewport on tablets/small laptops
 - Desktop icons auto-arrange into a grid on small screens and reflow on rotation
 - Long-press (or 🚩 mode) to flag in Minesweeper; 16px inputs to prevent iOS focus zoom
+- Clippy and the MSN popup wait while a window is open on a phone, instead of covering it
+- Projects with a live demo get a "▶ Try it live" link in Quick View and a "Run the live demo" button in My Projects (shown once the demo URL is set)
 
 ## Configuration
 

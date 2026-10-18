@@ -6,6 +6,7 @@ import {
 } from '../shared'
 import { XPModeButton, XPBanner } from '../shared/ModeSwitcher'
 import { FULL_HEIGHT } from '../hooks/useViewport'
+import { DEMO_URLS } from '../data/demo-urls'
 
 const NAV_ITEMS = [
   { id: 'about', label: 'About' },
@@ -127,7 +128,7 @@ export default function QuickPortfolio({ onSwitchToXP }) {
           <SectionHeader icon="🚀" title="Projects" color="#e65100" />
           <div style={styles.projectGrid}>
             {projects.map((project, i) => (
-              <ProjectCard key={i} {...project} />
+              <ProjectCard key={i} {...project} demoUrl={DEMO_URLS[project.demo]} />
             ))}
           </div>
         </section>

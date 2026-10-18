@@ -27,6 +27,11 @@ export const isCoarsePointer = () =>
   typeof window !== 'undefined' &&
   !!window.matchMedia?.('(pointer: coarse)').matches
 
+// A phone-sized screen in either orientation: narrow, or a touch screen
+// whose short side is phone-sized (a phone held sideways can be ~900px wide).
+export const isPhoneViewport = (w, h) =>
+  w < MOBILE_BREAKPOINT || (isCoarsePointer() && Math.min(w, h) < 600)
+
 // Fit a window's position/size into the current viewport:
 // shrink oversized windows, pull off-screen windows back in.
 export function fitToViewport(position, size, margin = 8) {

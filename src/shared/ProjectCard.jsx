@@ -1,6 +1,6 @@
 import { SkillBadge } from './SkillBadge'
 
-export function ProjectCard({ name, icon, tech = [], description, color = '#333', status, variant = 'default', style = {} }) {
+export function ProjectCard({ name, icon, tech = [], description, color = '#333', status, demoUrl, variant = 'default', style = {} }) {
   const isCompact = variant === 'compact'
   return (
     <div style={{
@@ -33,6 +33,21 @@ export function ProjectCard({ name, icon, tech = [], description, color = '#333'
             <SkillBadge key={i} label={t} color={color} size="small" />
           ))}
         </div>
+      )}
+      {demoUrl && (
+        <a href={demoUrl} target="_blank" rel="noopener noreferrer" style={{
+          display: 'inline-flex',
+          alignItems: 'center',
+          minHeight: 36,
+          marginTop: 12,
+          padding: '0 14px',
+          borderRadius: 6,
+          background: color,
+          color: '#fff',
+          fontSize: 13,
+          fontWeight: 600,
+          textDecoration: 'none',
+        }}>▶ Try it live</a>
       )}
     </div>
   )
