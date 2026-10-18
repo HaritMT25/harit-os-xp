@@ -23,6 +23,13 @@ export function startDrag(e, { onMove, onEnd, threshold = 0, touch = true } = {}
   const start = getPointer(e)
   let moved = false
 
+  // An iframe swallows pointer events, so a drag that passes over one (a
+  // window moved across the IE or EvoBoids content) would stall until the
+  // pointer left it. Switch them off for the duration of the drag.
+  const frames = Array.from(document.querySelectorAll('iframe'))
+  const framePointer = frames.map(f => f.style.pointerEvents)
+  frames.forEach(f => { f.style.pointerEvents = 'none' })
+
   const handleMove = (ev) => {
     const pt = getPointer(ev)
     if (!moved) {
@@ -35,6 +42,7 @@ export function startDrag(e, { onMove, onEnd, threshold = 0, touch = true } = {}
   }
 
   const handleUp = () => {
+    frames.forEach((f, i) => { f.style.pointerEvents = framePointer[i] })
     document.removeEventListener('mousemove', handleMove)
     document.removeEventListener('mouseup', handleUp)
     if (touch) {
