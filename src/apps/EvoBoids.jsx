@@ -1,9 +1,5 @@
 import { useState, useRef } from 'react'
-
-// The evo_boids WebAssembly demo, hosted as its own static Vercel project.
-// The fallback is that project's production URL (confirm it after the first
-// deploy); VITE_EVOBOIDS_URL overrides it, e.g. to test against a local copy.
-const DEMO_URL = import.meta.env.VITE_EVOBOIDS_URL || 'https://evo-boids.vercel.app'
+import { EVOBOIDS_URL as DEMO_URL } from '../data/demo-urls'
 
 // Why the embed is single-threaded: the threaded build needs
 // SharedArrayBuffer, which browsers only allow on a cross-origin-isolated page
