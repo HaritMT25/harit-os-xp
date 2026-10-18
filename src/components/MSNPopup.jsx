@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 
-export default function MSNPopup({ onOpenWindow, delay = 18000 }) {
+// hold: keep out of sight for now (shows once it is released, if due)
+export default function MSNPopup({ onOpenWindow, delay = 18000, hold = false }) {
   const [visible, setVisible] = useState(false)
   const [dismissed, setDismissed] = useState(false)
   const [closing, setClosing] = useState(false)
@@ -11,12 +12,12 @@ export default function MSNPopup({ onOpenWindow, delay = 18000 }) {
     return () => clearTimeout(timer)
   }, [delay, dismissed])
 
-  // Auto-dismiss after 8 seconds
+  // Auto-dismiss after 8 seconds on screen
   useEffect(() => {
-    if (!visible || dismissed) return
+    if (!visible || dismissed || hold) return
     const timer = setTimeout(() => handleClose(), 8000)
     return () => clearTimeout(timer)
-  }, [visible, dismissed])
+  }, [visible, dismissed, hold])
 
   const handleClose = () => {
     setClosing(true)
@@ -32,7 +33,7 @@ export default function MSNPopup({ onOpenWindow, delay = 18000 }) {
     handleClose()
   }
 
-  if (!visible || dismissed) return null
+  if (!visible || dismissed || hold) return null
 
   return (
     <div

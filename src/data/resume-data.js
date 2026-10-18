@@ -77,6 +77,7 @@ export const projects = [
     description: 'Artificial-life simulation: each fish has a small neural net wired by an inherited genome that mutates at birth. There is no fitness function — fish that fail to eat starve. Runs in the browser through WebAssembly (threaded when the page allows it), and the single-threaded build reproduces the native run bit for bit.',
     color: '#2a9d8f',
     status: 'Active',
+    demo: 'evoboids',   // live demo: URL in demo-urls.js, window in app-registry.js
   },
   {
     name: 'Real-Time Voice Conversion',

@@ -1,6 +1,8 @@
 import { useState } from 'react'
 import { projects } from '../data/resume-data'
 import { useViewportSize } from '../hooks/useViewport'
+import { DEMO_URLS } from '../data/demo-urls'
+import { openWindow } from '../hooks/eventBus'
 
 export default function ProjectExplorer() {
   const [selectedProject, setSelectedProject] = useState(null)
@@ -169,6 +171,13 @@ function ProjectDetail({ project, onBack }) {
           </div>
         </div>
       </div>
+
+      {/* a live demo opens in its own window (app id = demo id) */}
+      {DEMO_URLS[project.demo] && (
+        <button style={styles.demoBtn} onClick={() => openWindow(project.demo)}>
+          ▶ Run the live demo
+        </button>
+      )}
 
       <div style={styles.detailSection}>
         <h3 style={styles.detailSectionTitle}>Description</h3>
@@ -360,6 +369,19 @@ const styles = {
     alignItems: 'center',
     justifyContent: 'center',
     flexShrink: 0,
+  },
+  demoBtn: {
+    minHeight: 32,
+    padding: '0 14px',
+    marginBottom: 16,
+    border: '1px solid #7f9db9',
+    borderRadius: 3,
+    background: 'linear-gradient(180deg, #fff, #ece9d8)',
+    color: '#1d4ed8',
+    fontWeight: 700,
+    fontSize: 11,
+    cursor: 'pointer',
+    fontFamily: "'Tahoma', sans-serif",
   },
   detailSection: { marginBottom: 16 },
   detailSectionTitle: {

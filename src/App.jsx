@@ -1,6 +1,6 @@
 import { useCallback, useEffect, lazy, Suspense, memo } from 'react'
 import { useWindowManager } from './hooks/useWindowManager'
-import { FULL_HEIGHT } from './hooks/useViewport'
+import { FULL_HEIGHT, MOBILE_BREAKPOINT, useViewportSize } from './hooks/useViewport'
 import { useAppMode } from './hooks/useAppMode'
 import { useVisitorTracking } from './hooks/useVisitorTracking'
 import { useSounds } from './hooks/useSounds'
@@ -104,6 +104,12 @@ export default function App() {
 
   useVisitorTracking()
 
+  // Narrow screens maximize every window, so Clippy and the MSN popup would
+  // cover the one in use: they wait until no window is open.
+  const { w: viewW } = useViewportSize()
+  const holdPopups = viewW < MOBILE_BREAKPOINT &&
+    Object.values(windows).some(win => !win.minimized)
+
   useEffect(() => { initAnalytics() }, [])
   useEffect(() => { trackModeView(mode) }, [mode])
 
@@ -206,8 +212,8 @@ export default function App() {
           onShowDesktop={minimizeAll}
           onNavigate={navigate}
         />
-        <Clippy onOpenWindow={handleOpenWindow} delay={12000} />
-        <MSNPopup onOpenWindow={handleOpenWindow} delay={18000} />
+        <Clippy onOpenWindow={handleOpenWindow} delay={12000} hold={holdPopups} />
+        <MSNPopup onOpenWindow={handleOpenWindow} delay={18000} hold={holdPopups} />
       </Suspense>
 
       {showWelcome && (
