@@ -40,6 +40,7 @@ npm run dev             # http://localhost:3000
 | 🤖 HaritBot | AI assistant powered by Groq (Llama 3.3) with full RAG context |
 | 💻 Terminal | Interactive shell with 15+ commands, arrow-key history |
 | 🌐 Internet Explorer | Embed live project demos via iframe |
+| 🐟 EvoBoids.exe | The evo_boids evolution simulation (C++ → WebAssembly) in a window, with an "Open full version" link |
 | 📝 Notepad | Editable text app |
 | 💣 Minesweeper | Working 9×9 game with timer and flag counter |
 
@@ -81,6 +82,8 @@ Update these `// TODO` fields before deploying:
 ### Embedding Live Projects
 
 Edit `src/apps/InternetExplorer.jsx` — add deployed URLs to the `BOOKMARKS` array.
+
+`src/apps/EvoBoids.jsx` embeds the evo_boids demo from its own Vercel project. The URL is `EVOBOIDS_URL` in `src/data/demo-urls.js`, shared with the Internet Explorer bookmark. It can also come from the `VITE_EVOBOIDS_URL` environment variable: in Vercel's project settings for production, or locally for testing. While it's empty, the window and the bookmark show "coming soon". Inside the iframe the demo runs its single-threaded build, because this site does not send the cross-origin-isolation headers (COOP/COEP) that its threaded build needs, and adding them would break the other embeds. "Open full version" opens it in a new tab, where it gets them.
 
 ### Sound Effects
 
@@ -125,6 +128,7 @@ src/
 │   ├── ContactOutlook.jsx
 │   ├── Terminal.jsx
 │   ├── InternetExplorer.jsx
+│   ├── EvoBoids.jsx
 │   ├── AIAssistant.jsx
 │   ├── Notepad.jsx
 │   └── Minesweeper.jsx

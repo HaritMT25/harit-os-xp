@@ -53,6 +53,7 @@ src/
 │   ├── AIAssistant.jsx
 │   ├── Terminal.jsx
 │   ├── InternetExplorer.jsx
+│   ├── EvoBoids.jsx           # iframe of the evo_boids wasm demo (single-threaded here)
 │   ├── VisitorMap.jsx
 │   ├── Notepad.jsx
 │   └── Minesweeper.jsx

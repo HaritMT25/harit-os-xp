@@ -1,4 +1,5 @@
 import { useState, useCallback, useRef } from 'react'
+import { EVOBOIDS_URL } from '../data/demo-urls'
 
 const GENUI_URL = 'https://genui-hackathon.vercel.app'
 
@@ -9,6 +10,12 @@ const BOOKMARKS = [
     description: 'AI designs full landing pages — then you control colors, fonts, tone',
     ready: true,
     featured: true,
+  },
+  {
+    name: '🐟 evo_boids',
+    url: EVOBOIDS_URL,
+    description: 'Evolving fish: C++ simulation running as WebAssembly',
+    ready: !!EVOBOIDS_URL,
   },
   {
     name: '🕉️ SriDarshan',
