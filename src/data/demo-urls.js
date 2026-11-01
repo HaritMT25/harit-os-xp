@@ -2,7 +2,7 @@
 // open or embed them. An empty URL means "not deployed yet": the apps then
 // show it as coming soon instead of embedding a page that does not exist.
 
-// The evo_boids WebAssembly demo, its own static Vercel project (evo-boids).
+// The Finfolk (formerly evo_boids) WebAssembly demo, its own static Vercel project (evo-boids).
 // VITE_EVOBOIDS_URL overrides it, e.g. with a local build for testing.
 export const EVOBOIDS_URL = import.meta.env.VITE_EVOBOIDS_URL || 'https://evo-boids.vercel.app/'
 

@@ -12,7 +12,7 @@ const BOOKMARKS = [
     featured: true,
   },
   {
-    name: '🐟 evo_boids',
+    name: '🐟 Finfolk',
     url: EVOBOIDS_URL,
     description: 'Evolving fish: C++ simulation running as WebAssembly',
     ready: !!EVOBOIDS_URL,
