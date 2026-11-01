@@ -71,7 +71,7 @@ export const projects = [
     status: 'Active',
   },
   {
-    name: 'evo_boids — Evolving Fish',
+    name: 'Finfolk — Evolving Fish',
     icon: '🐟',
     tech: ['C++20', 'WebAssembly', 'Emscripten', 'OpenMP', 'pthreads', 'Neuroevolution'],
     description: 'Artificial-life simulation: each fish has a small neural net wired by an inherited genome that mutates at birth. There is no fitness function — fish that fail to eat starve. Runs in the browser through WebAssembly (threaded when the page allows it), and the single-threaded build reproduces the native run bit for bit.',

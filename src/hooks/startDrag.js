@@ -24,7 +24,7 @@ export function startDrag(e, { onMove, onEnd, threshold = 0, touch = true } = {}
   let moved = false
 
   // An iframe swallows pointer events, so a drag that passes over one (a
-  // window moved across the IE or EvoBoids content) would stall until the
+  // window moved across the IE or Finfolk content) would stall until the
   // pointer left it. Switch them off for the duration of the drag.
   const frames = Array.from(document.querySelectorAll('iframe'))
   const framePointer = frames.map(f => f.style.pointerEvents)

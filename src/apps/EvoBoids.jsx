@@ -38,7 +38,7 @@ export default function EvoBoids() {
   return (
     <div style={S.container}>
       <div style={S.toolbar}>
-        <span style={S.title}>🐟 evo_boids{phone ? '' : ' — evolving fish in your browser'}</span>
+        <span style={S.title}>🐟 Finfolk{phone ? '' : ' — evolving fish in your browser'}</span>
         {chrome && (
           <div style={S.tools}>
             <button style={{ ...S.btn, ...off }} onClick={reload} disabled={!live}
@@ -64,14 +64,14 @@ export default function EvoBoids() {
           <>
             {loading && <div style={S.loadBar}><div style={S.loadFill} /></div>}
             <iframe key={nonce} ref={iframeRef} src={DEMO_URL} style={S.iframe}
-              title="evo_boids simulation"
+              title="Finfolk simulation"
               onLoad={() => setLoading(false)} onError={() => setLoading(false)}
               sandbox="allow-scripts allow-same-origin allow-downloads" />
           </>
         ) : live ? (
           <div style={S.panel}>
             <div style={{ fontSize: 44, marginBottom: 10 }}>🐟</div>
-            <div style={S.panelTitle}>evo_boids — evolving fish</div>
+            <div style={S.panelTitle}>Finfolk — evolving fish</div>
             <p style={S.panelText}>{ABOUT}</p>
             <ul style={S.panelList}>
               <li>Tap a fish to see its neural network at work.</li>
@@ -86,7 +86,7 @@ export default function EvoBoids() {
         ) : (
           <div style={S.panel}>
             <div style={{ fontSize: 44, marginBottom: 10 }}>🐟</div>
-            <div style={S.panelTitle}>evo_boids — coming soon</div>
+            <div style={S.panelTitle}>Finfolk — coming soon</div>
             <p style={S.panelText}>{ABOUT}</p>
           </div>
         )}
