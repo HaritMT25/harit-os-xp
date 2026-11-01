@@ -85,7 +85,7 @@ Update these `// TODO` fields before deploying:
 
 Edit `src/apps/InternetExplorer.jsx` — add deployed URLs to the `BOOKMARKS` array.
 
-`src/apps/EvoBoids.jsx` embeds the Finfolk demo (formerly evo_boids) from its own Vercel project, https://evo-boids.vercel.app/. The URL is `EVOBOIDS_URL` in `src/data/demo-urls.js`, shared with the Internet Explorer bookmark and the projects' "Try it" links. The `VITE_EVOBOIDS_URL` environment variable overrides it, for example to test a local build. If it is ever set to empty, the window and the bookmark show "coming soon". Inside the iframe the demo runs its single-threaded build, because this site does not send the cross-origin-isolation headers (COOP/COEP) that its threaded build needs, and adding them would break the other embeds. "Open full version" opens it in a new tab, where it gets them.
+`src/apps/EvoBoids.jsx` embeds the Finfolk demo (formerly evo_boids) from its own Vercel project, https://finfolk-sim.vercel.app/ (formerly https://evo-boids.vercel.app/, which still works). The URL is `EVOBOIDS_URL` in `src/data/demo-urls.js`, shared with the Internet Explorer bookmark and the projects' "Try it" links. The `VITE_EVOBOIDS_URL` environment variable overrides it, for example to test a local build. If it is ever set to empty, the window and the bookmark show "coming soon". Inside the iframe the demo runs its single-threaded build, because this site does not send the cross-origin-isolation headers (COOP/COEP) that its threaded build needs, and adding them would break the other embeds. "Open full version" opens it in a new tab, where it gets them.
 
 ### Sound Effects
 
