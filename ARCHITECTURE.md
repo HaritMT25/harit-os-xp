@@ -125,7 +125,7 @@ Started with `react-leaflet` but it crashed consistently on first load due to co
 
 ### Visitor Map — Privacy Model
 
-Every visitor is auto-pinned as "Anonymous" with city-level coordinates (rounded to 1 decimal ≈ 11km precision). No IP address is stored. `localStorage` prevents duplicate pins from the same browser. Visitors can optionally upgrade to a named pin (gold dot vs blue dot). The API route (`api/visits.js`) stores pins in Redis with a 1000-entry cap.
+Every visitor is auto-pinned as "Anonymous" with city-level coordinates (rounded to 1 decimal ≈ 11km precision). No IP address is stored. `localStorage` prevents duplicate pins from the same browser. Visitors can optionally upgrade to a named pin (gold dot vs blue dot). The API route (`api/visits.js`) keeps two things in Redis: a raw visit log capped at 1000 entries (feeds the "Recent" strip), and per-place hashes keyed by the 0.1° cell (visit count, label, latest name) that are never trimmed, so the map shows every place anyone has visited from and the counter shows the all-time total. Visits from before the hashes existed were folded in once, on the first request after deploy.
 
 ### HaritBot — RAG Architecture
 

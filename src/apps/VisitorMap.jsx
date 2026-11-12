@@ -7,8 +7,6 @@ const CARTO_KEY = import.meta.env.VITE_CARTO_KEY || ''
 const TILE_URL = `https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png${CARTO_KEY ? `?key=${CARTO_KEY}` : ''}`
 const TILE_ATTRIB = '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>, &copy; <a href="https://carto.com/attributions">CARTO</a>'
 
-function roundCoord(n) { return Math.round((n || 0) * 10) / 10 }
-
 // popups are built as HTML strings for Leaflet, so anything from the API
 // must be escaped — names are visitor-submitted and served to everyone
 function esc(v) {
@@ -32,7 +30,11 @@ export default function VisitorMap() {
   const mapInstanceRef = useRef(null)
   const markersRef = useRef([])
 
-  const [allVisits, setAllVisits] = useState([])
+  // pins: one per ~11 km cell, all-time, aggregated server-side
+  // recent: newest few raw visits for the strip under the map
+  const [pins, setPins] = useState([])
+  const [recent, setRecent] = useState([])
+  const [total, setTotal] = useState(0)
   const [myLocation, setMyLocation] = useState(null)
   const [loading, setLoading] = useState(true)
   const [name, setName] = useState(() => localStorage.getItem('harit_visitor_name') || '')
@@ -65,7 +67,9 @@ export default function VisitorMap() {
     let cancelled = false
     safeFetchJson(API_URL).then(data => {
       if (cancelled || !data) return
-      setAllVisits(data.visits || [])
+      setPins(data.pins || [])
+      setRecent(data.visits || [])
+      setTotal(data.total || 0)
       if (data.you) {
         setMyLocation(data.you)
         try { if (mapInstanceRef.current) mapInstanceRef.current.flyTo([data.you.lat, data.you.lon], 4, { duration: 1.5 }) } catch {}
@@ -81,19 +85,6 @@ export default function VisitorMap() {
     import('leaflet').then((L) => {
       markersRef.current.forEach(m => { try { m.remove() } catch {} })
       markersRef.current = []
-
-      // cluster
-      const pins = allVisits.reduce((acc, v) => {
-        const key = `${roundCoord(v.lat)},${roundCoord(v.lon)}`
-        if (!acc.map[key]) {
-          acc.map[key] = { ...v, count: 1, hasNamed: v.name !== 'Anonymous' }
-          acc.list.push(acc.map[key])
-        } else {
-          acc.map[key].count++
-          if (v.name !== 'Anonymous') { acc.map[key].name = v.name; acc.map[key].hasNamed = true }
-        }
-        return acc
-      }, { map: {}, list: [] }).list
 
       pins.forEach(v => {
         const isMe = myLocation && Math.abs(v.lat - myLocation.lat) < 1 && Math.abs(v.lon - myLocation.lon) < 1
@@ -124,7 +115,7 @@ export default function VisitorMap() {
         markersRef.current.push(m)
       }
     }).catch(() => {})
-  }, [allVisits, myLocation, mapReady])
+  }, [pins, myLocation, mapReady])
 
   // upgrade from anonymous to named
   const handleName = useCallback(() => {
@@ -138,8 +129,9 @@ export default function VisitorMap() {
     setNamed(true)
   }, [name, myLocation])
 
-  const anonCount = allVisits.filter(v => v.name === 'Anonymous').length
-  const namedCount = allVisits.filter(v => v.name !== 'Anonymous').length
+  // legend counts the dots on the map: places, not visits
+  const anonCount = pins.filter(p => !p.hasNamed).length
+  const namedCount = pins.filter(p => p.hasNamed).length
 
   return (
     <div style={styles.container}>
@@ -156,8 +148,8 @@ export default function VisitorMap() {
           <span style={styles.legendItem}><span style={{ ...styles.legendDot, background: '#ffb800' }} />{namedCount}</span>
         </div>
         <div style={styles.counter}>
-          <div style={styles.counterNum}>{allVisits.length}</div>
-          <div style={styles.counterLabel}>pins</div>
+          <div style={styles.counterNum}>{total}</div>
+          <div style={styles.counterLabel}>visits</div>
         </div>
       </div>
 
@@ -181,10 +173,10 @@ export default function VisitorMap() {
         )}
       </div>
 
-      {allVisits.length > 0 && (
+      {recent.length > 0 && (
         <div style={styles.recentBar}>
           <span style={styles.recentLabel}>Recent:</span>
-          {allVisits.slice(0, 10).map((v, i) => (
+          {recent.slice(0, 10).map((v, i) => (
             <span key={i} style={{
               ...styles.recentChip,
               borderColor: v.name !== 'Anonymous' ? '#ffb80040' : '#4488ff30',
