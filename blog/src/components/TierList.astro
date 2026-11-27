@@ -1,0 +1,15 @@
+---
+// The tier chart drawn from a post's `tiers` field (set in Pages CMS).
+const { tiers = [] } = Astro.props
+const COLORS = { S: '#ff7f7f', A: '#ffbf7f', B: '#ffdf7f', C: '#ffff7f', D: '#bfff7f', F: '#7fbfff' }
+---
+<div class="tierlist" role="table" aria-label="Tier list">
+  {tiers.map(t => (
+    <div class="tier-row" role="row">
+      <div class="tier-label" role="rowheader" style={`background:${COLORS[t.tier.trim().toUpperCase()] ?? '#d0d0d0'}`}>{t.tier}</div>
+      <div class="tier-items" role="cell">
+        {t.items.length ? t.items.map(item => <span class="tier-chip">{item}</span>) : <span class="tier-none">—</span>}
+      </div>
+    </div>
+  ))}
+</div>

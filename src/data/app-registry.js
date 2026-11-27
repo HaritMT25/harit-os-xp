@@ -47,6 +47,18 @@ const APP_REGISTRY = {
     startMenu: true,
     component: lazy(() => import('../apps/ProjectExplorer')),
   },
+  blog: {
+    id: 'blog',
+    label: 'Blog',
+    windowTitle: "Harit's Blog",
+    icon: '📰',
+    desc: 'Posts, write-ups, tier lists',
+    window: { position: { x: 90, y: 36 }, size: { w: 820, h: 600 } },
+    desktop: { x: 16, y: 492 },
+    desktopLabel: 'My Blog',
+    startMenu: true,
+    component: lazy(() => import('../apps/Blog')),
+  },
   skills: {
     id: 'skills',
     label: 'Skills',

@@ -1,0 +1,131 @@
+---
+import Base from '../layouts/Base.astro'
+import { url } from '../lib/site.js'
+---
+<Base title="Moderate comments" noindex>
+  <a class="back" href={url()}>← All posts</a>
+  <h1 class="mod-title">Moderate comments</h1>
+
+  <form class="key-form" data-key-form hidden>
+    <p class="muted">Enter the owner key. It's the same key as the 🔑 button on the Visitor Map.</p>
+    <div class="form-row">
+      <input type="password" name="key" aria-label="Owner key" placeholder="Owner key" autocomplete="current-password" />
+      <button type="submit" class="btn">Unlock</button>
+    </div>
+    <p class="form-status" data-key-status role="status" aria-live="polite"></p>
+  </form>
+
+  <div data-panel hidden>
+    <div class="filters" role="group" aria-label="Show">
+      <button type="button" class="chip" aria-pressed="true" data-show="pending">Waiting <span data-n-pending></span></button>
+      <button type="button" class="chip" aria-pressed="false" data-show="all">All recent</button>
+    </div>
+    <p class="muted" data-mod-empty hidden></p>
+    <ol class="mod-list" data-mod-list></ol>
+  </div>
+
+  <script>
+    import { api, ownerKey, setOwnerKey, fmtDate } from '../scripts/owner.js'
+
+    const $ = s => document.querySelector(s)
+    const keyForm = $('[data-key-form]')
+    const panel = $('[data-panel]')
+    const listEl = $('[data-mod-list]')
+    const BASE = import.meta.env.BASE_URL.replace(/\/$/, '')
+    let comments = []
+    let show = 'pending'
+
+    const LABEL = { visible: 'Visible', pending: 'Waiting', hidden: 'Hidden' }
+
+    function button(text, cls, onClick) {
+      const b = document.createElement('button')
+      b.type = 'button'
+      b.className = `btn btn-small ${cls}`
+      b.textContent = text
+      b.addEventListener('click', onClick)
+      return b
+    }
+
+    async function act(c, op, btn) {
+      btn.disabled = true
+      const { ok, data } = await api('POST', { action: 'mod', key: ownerKey(), op, ref: c.ref })
+      if (!ok) { btn.disabled = false; btn.textContent = 'Failed'; return }
+      if (op === 'delete') comments = comments.filter(x => x.ref !== c.ref)
+      else Object.assign(c, { status: data.comment.status })
+      render()
+    }
+
+    function render() {
+      const pending = comments.filter(c => c.status === 'pending').length
+      $('[data-n-pending]').textContent = pending ? `(${pending})` : ''
+      const rows = show === 'pending' ? comments.filter(c => c.status === 'pending') : comments
+      const empty = $('[data-mod-empty]')
+      empty.hidden = rows.length > 0
+      empty.textContent = show === 'pending' ? 'Nothing is waiting. 🎉' : 'No comments yet.'
+      listEl.replaceChildren(...rows.map(c => {
+        const li = document.createElement('li')
+        li.className = `mod-item mod-${c.status}`
+        const head = document.createElement('div')
+        head.className = 'comment-head'
+        const name = document.createElement('strong')
+        name.textContent = c.name
+        const post = document.createElement('a')
+        post.href = `${BASE}/${c.slug}/#comments`
+        post.textContent = c.slug
+        const when = document.createElement('time')
+        when.textContent = fmtDate(c.ts)
+        const st = document.createElement('span')
+        st.className = `pill pill-status-${c.status}`
+        st.textContent = LABEL[c.status] || c.status
+        head.append(name, st, post, when)
+        const text = document.createElement('p')
+        text.className = 'comment-text'
+        text.textContent = c.text
+        const actions = document.createElement('div')
+        actions.className = 'mod-actions'
+        if (c.status !== 'visible') actions.append(button(c.status === 'hidden' ? 'Show' : 'Approve', 'btn-ok', e => act(c, 'approve', e.target)))
+        if (c.status !== 'hidden') actions.append(button('Hide', '', e => act(c, 'hide', e.target)))
+        // two clicks to delete, no browser dialog
+        const del = button('Delete', 'btn-danger', e => {
+          if (del.dataset.armed) return act(c, 'delete', del)
+          del.dataset.armed = '1'
+          del.textContent = 'Really delete?'
+          setTimeout(() => { delete del.dataset.armed; del.textContent = 'Delete' }, 4000)
+        })
+        actions.append(del)
+        li.append(head, text, actions)
+        return li
+      }))
+    }
+
+    async function open(key) {
+      const { ok, status, data } = await api('POST', { action: 'mod', op: 'list', key })
+      if (!ok) return status
+      setOwnerKey(key)
+      comments = data.comments || []
+      keyForm.hidden = true
+      panel.hidden = false
+      render()
+      return 200
+    }
+
+    document.querySelectorAll('[data-show]').forEach(chip => chip.addEventListener('click', () => {
+      show = chip.dataset.show
+      document.querySelectorAll('[data-show]').forEach(c => c.setAttribute('aria-pressed', String(c === chip)))
+      render()
+    }))
+
+    keyForm.addEventListener('submit', async e => {
+      e.preventDefault()
+      const key = keyForm.elements.namedItem('key').value.trim()
+      if (!key) return
+      const code = await open(key)
+      $('[data-key-status]').textContent = code === 200 ? '' : ({
+        401: 'Wrong key.', 429: 'Too many tries. Wait an hour.', 503: 'No owner key is set on the server yet.',
+      }[code] || 'Could not reach the server.')
+    })
+
+    const saved = ownerKey()
+    ;(saved ? open(saved) : Promise.resolve(0)).then(code => { if (code !== 200) keyForm.hidden = false })
+  </script>
+</Base>

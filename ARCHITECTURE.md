@@ -62,8 +62,17 @@ src/
 │   ├── animations.css         # all keyframes consolidated
 │   └── print.css              # print stylesheet for resume
 api/
-├── visits.js                  # Vercel serverless function for visitor pins
+├── visits.js                  # Vercel serverless function for visitor pins (+ owner key unlock)
+├── blog.js                    # blog views, comments, moderation
 └── chat.js                    # HaritBot proxy — server-side Groq key + rate limiting
+server/
+└── owner.js                   # owner-key check + bot filter shared by the API routes (outside api/ so it isn't a function)
+blog/                          # the blog: a separate Astro static site, built into dist/blog
+├── astro.config.mjs           # base /blog, output ../dist/blog
+└── src/
+    ├── content/posts/         # Markdown posts, edited through Pages CMS (/.pages.yml)
+    ├── pages/                 # index, [slug], moderate, rss.xml
+    └── scripts/owner.js       # owner key + API helper shared by the blog pages
 ```
 
 ## Key Design Decisions
@@ -126,6 +135,14 @@ Started with `react-leaflet` but it crashed consistently on first load due to co
 ### Visitor Map — Privacy Model
 
 Every visitor is auto-pinned as "Anonymous" with city-level coordinates (rounded to 1 decimal ≈ 11km precision). No IP address is stored. `localStorage` prevents duplicate pins from the same browser. Visitors can optionally upgrade to a named pin (gold dot vs blue dot). The API route (`api/visits.js`) keeps two things in Redis: a raw visit log capped at 1000 entries (feeds the "Recent" strip), and per-place hashes keyed by the 0.1° cell (visit count, label, latest name) that are never trimmed, so the map shows every place anyone has visited from and the counter shows the all-time total. Visits from before the hashes existed were folded in once, on the first request after deploy.
+
+### Blog — Why a Separate Static Site
+
+The blog is not a route inside the React app. A shared link has to unfurl on LinkedIn, iMessage and WhatsApp with the post's own title, summary and image, and those crawlers don't run JavaScript, so every post needs real HTML. A reader arriving from a link should also land on the post, not on the boot sequence. Astro builds plain HTML pages into `dist/blog`. The XP app embeds them in a window (same origin, so the window's toolbar can show the page title and drive Back). Posts are Markdown in the repo, and Pages CMS edits them by committing to `main`. There is no database or CMS server to run, and every post has git history. Views and comments are the only dynamic parts. They load client-side from `api/blog.js`, which keeps them in the existing Redis.
+
+### Owner Key
+
+`OWNER_KEY` (server env) is the one secret for owner-only actions. The Visitor Map's 🔑 button checks it, and the blog's moderation page and author comments use it too. Five wrong tries lock an IP out for an hour. The browser keeps the key in `localStorage` (`harit_owner_key`), which both the XP app and `/blog` read. A browser holding it skips the visit POST, GA4 (`ga-disable-*` is set before `gtag('config')`), Vercel Analytics (`beforeSend`), and blog view counts.
 
 ### HaritBot — RAG Architecture
 

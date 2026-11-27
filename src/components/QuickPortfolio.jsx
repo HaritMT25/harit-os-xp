@@ -67,6 +67,7 @@ export default function QuickPortfolio({ onSwitchToXP }) {
                 {item.label}
               </button>
             ))}
+            <a href="/blog/" style={{ ...styles.navLink, color: '#666', textDecoration: 'none' }}>Blog</a>
           </div>
           <XPModeButton onClick={onSwitchToXP} style={{ flexShrink: 0 }} />
         </div>
