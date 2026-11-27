@@ -93,6 +93,16 @@ The 🔑 button in the Visitor Map's header takes the owner key (Vercel env `OWN
 
 Windows has no flag emoji, so Chrome and Edge there show "US" instead of 🇺🇸. `main.jsx` loads [country-flag-emoji-polyfill](https://github.com/talkjs/country-flag-emoji-polyfill) with its font bundled from npm (no CDN), only on browsers that need it. The flag glyphs are [Twemoji](https://github.com/jdecked/twemoji) (CC-BY 4.0).
 
+### Blog (/blog)
+
+The blog is a separate static site in `blog/` (Astro), built into `dist/blog` after the XP app and served by the same Vercel project at `/blog/`. The 📰 **My Blog** icon and Start menu entry open it in an XP window, Quick View links to it, and every post has its own URL with link-preview tags and an RSS feed at `/blog/rss.xml`.
+
+- **Writing.** Posts are Markdown files in `blog/src/content/posts`, edited with [Pages CMS](https://pagescms.org): sign in at app.pagescms.org with GitHub and open this repo (the fields are set in `.pages.yml`). New posts start as drafts. Untick **Draft** to publish. Every save is a commit to `main`, so Vercel deploys it in about a minute. Images go to `blog/public/media`. A post can have a tier list (S to F rows), drawn above the text.
+- **Comments.** No login: a name and a comment. Plain comments show at once. Comments with links, or names containing "Harit", wait for approval. The rate limit is three comments per 10 minutes and 20 per day per visitor, with a hidden honeypot field for bots. Moderate at `/blog/moderate/` with the owner key (approve, hide, delete). With the owner key, your own comments show an Author badge.
+- **Views.** One view per visitor per post per day, deduped by a salted hash that expires (raw IPs are never stored). Crawlers and owner-mode browsers don't count.
+- **API.** `api/blog.js` stores views and comments in the same Redis as the visitor map, under `blog:*` keys. Tests: `test/blog-api.test.js`.
+- **Local.** `npm run dev:blog` serves the blog with drafts at http://localhost:4321/blog/ (comments and views need the API, so they show as unavailable there). `npm run build && npm run preview` serves both sites together. `BLOG_DRAFTS=1 npm run build` includes drafts.
+
 ### Sound Effects
 
 All UI sounds (startup chime, clicks, minimize/close, notifications) are synthesized at runtime with the Web Audio API — no audio files, and every melody is original. Silently no-ops if the browser blocks audio.
@@ -100,11 +110,11 @@ All UI sounds (startup chime, clicks, minimize/close, notifications) are synthes
 ## Deployment
 
 ```bash
-npm run build    # Output in dist/
+npm run build    # XP app into dist/, then the blog into dist/blog/
 npx vercel       # Deploy to Vercel
 ```
 
-`vercel.json` is included with SPA routing and iframe headers pre-configured.
+`vercel.json` sets the build command and output folder, sends every path except `/blog/` and `/api/` to the XP app, and sets the iframe headers. Environment variables: `REDIS_URL` (visitor map, blog), `OWNER_KEY` (Visitor Map key button and blog moderation), `GROQ_API_KEY` (HaritBot), `VITE_CARTO_KEY` (map tiles), `VITE_GA4_MEASUREMENT_ID` (analytics).
 
 ## Project Structure
 

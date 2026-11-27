@@ -1,0 +1,84 @@
+# Pages CMS (https://pagescms.org): a web editor for the blog under /blog.
+# Sign in at https://app.pagescms.org with GitHub and open this repository.
+# Every save is a commit to main, and Vercel deploys it in about a minute.
+# The fields below must match blog/src/content.config.js.
+
+media:
+  input: blog/public/media
+  output: /blog/media
+  categories: [image]
+  rename: safe
+
+content:
+  - name: posts
+    label: Blog posts
+    type: collection
+    path: blog/src/content/posts
+    filename:
+      template: "{year}-{month}-{day}-{primary}.md"
+      field: create
+    view:
+      fields: [title, date, draft, tags]
+      primary: title
+      sort: [date, title]
+      default:
+        sort: date
+        order: desc
+    fields:
+      - name: title
+        label: Title
+        type: string
+        required: true
+      - name: date
+        label: Date
+        type: date
+        options:
+          format: yyyy-MM-dd
+      - name: summary
+        label: Summary
+        type: text
+        description: One or two sentences. Shown on the blog's front page and in link previews.
+      - name: tags
+        label: Tags
+        type: select
+        description: Tech for write-ups, Life for everything else. Visitors can filter by these.
+        options:
+          values: [Tech, Life]
+          multiple: true
+      - name: cover
+        label: Cover image
+        type: image
+        description: Optional. Also used as the picture in link previews (LinkedIn, iMessage, WhatsApp).
+      - name: cover_alt
+        label: Cover image description
+        type: string
+        description: Describe the cover for screen readers.
+      - name: draft
+        label: Draft
+        type: boolean
+        default: true
+        description: Drafts are saved but not shown on the blog. Untick to publish.
+      - name: tiers
+        label: Tier list
+        description: Optional. Adds a tier chart (S to D) above the post. Leave empty for normal posts.
+        type: object
+        list:
+          collapsible:
+            collapsed: false
+            summary: "{tier} tier"
+        fields:
+          - name: tier
+            label: Tier
+            type: select
+            options:
+              values: [S, A, B, C, D, F]
+          - name: items
+            label: Items in this tier
+            type: string
+            list: true
+      - name: body
+        label: Post
+        type: rich-text
+        options:
+          format: markdown
+          path: blog/public/media

@@ -1,0 +1,185 @@
+---
+import { render } from 'astro:content'
+import Base from '../layouts/Base.astro'
+import TierList from '../components/TierList.astro'
+import { publishedPosts, slugOf, url, fmtDate, readingTime } from '../lib/site.js'
+
+export async function getStaticPaths() {
+  const posts = await publishedPosts()
+  return posts.map(post => ({ params: { slug: slugOf(post) }, props: { post } }))
+}
+
+const { post } = Astro.props
+const slug = slugOf(post)
+const { title, date, summary, tags, cover, cover_alt, draft, tiers } = post.data
+const { Content } = await render(post)
+---
+<Base title={title} description={summary} image={cover} type="article" published={date}>
+  <article class="post" data-post data-slug={slug}>
+    <a class="back" href={url()}>← All posts</a>
+    <header class="post-header">
+      <div class="meta">
+        <time datetime={date.toISOString()}>{fmtDate(date)}</time>
+        <span>· {readingTime(post.body)} min read</span>
+        <span class="views" data-views hidden></span>
+        {draft && <span class="pill pill-draft">Draft (not published)</span>}
+      </div>
+      <h1>{title}</h1>
+      {summary && <p class="dek">{summary}</p>}
+      {tags.length > 0 && (
+        <div class="pills">{tags.map(t => <span class={`pill pill-${t.toLowerCase()}`}>{t}</span>)}</div>
+      )}
+    </header>
+
+    {cover && <img class="post-cover" src={cover} alt={cover_alt} decoding="async" />}
+    {tiers.length > 0 && <TierList tiers={tiers} />}
+
+    <div class="prose">
+      <Content />
+    </div>
+  </article>
+
+  <section class="comments" id="comments" aria-labelledby="comments-title">
+    <h2 id="comments-title">Comments <span class="count" data-count></span></h2>
+    <p class="muted" data-loading>Loading comments…</p>
+    <ol class="comment-list" data-list></ol>
+    <p class="muted" data-empty hidden>No comments yet. Say something!</p>
+
+    <form class="comment-form" data-form novalidate>
+      <div class="field">
+        <label for="c-name">Name</label>
+        <input id="c-name" name="name" maxlength="40" autocomplete="nickname" placeholder="Anonymous" />
+      </div>
+      <div class="field">
+        <label for="c-text">Comment</label>
+        <textarea id="c-text" name="text" maxlength="2000" rows="4" required></textarea>
+      </div>
+      <div class="hp" aria-hidden="true">
+        <label for="c-website">Leave this empty</label>
+        <input id="c-website" name="website" tabindex="-1" autocomplete="off" />
+      </div>
+      <div class="form-row">
+        <span class="hint" data-hint>Be kind. Comments with links wait for a quick review.</span>
+        <button type="submit" class="btn" data-submit>Post comment</button>
+      </div>
+      <p class="form-status" data-status role="status" aria-live="polite"></p>
+    </form>
+  </section>
+
+  <script>
+    import { api, isOwner, ownerKey, fmtDate, plural } from '../scripts/owner.js'
+
+    const slug = document.querySelector('[data-post]').dataset.slug
+    const $ = s => document.querySelector(s)
+    const list = $('[data-list]')
+    const form = $('[data-form]')
+    const status = $('[data-status]')
+    // explicit lookups: form.name would be the form's own name attribute
+    const field = n => form.elements.namedItem(n)
+    let shown = 0
+
+    function setViews(n) {
+      const el = $('[data-views]')
+      if (!n) return
+      el.textContent = `· 👁 ${plural(n, 'view')}`
+      el.hidden = false
+    }
+
+    function setCount() {
+      $('[data-count]').textContent = shown ? `(${shown})` : ''
+      $('[data-empty]').hidden = shown > 0
+    }
+
+    // text only, never HTML: comments are visitor-written
+    function addComment(c) {
+      const li = document.createElement('li')
+      li.className = 'comment' + (c.owner ? ' comment-owner' : '')
+      const head = document.createElement('div')
+      head.className = 'comment-head'
+      const name = document.createElement('strong')
+      name.textContent = c.name
+      head.append(name)
+      if (c.owner) {
+        const badge = document.createElement('span')
+        badge.className = 'pill pill-author'
+        badge.textContent = 'Author'
+        head.append(badge)
+      }
+      const when = document.createElement('time')
+      when.dateTime = new Date(c.ts).toISOString()
+      when.textContent = fmtDate(c.ts)
+      head.append(when)
+      const body = document.createElement('p')
+      body.className = 'comment-text'
+      body.textContent = c.text
+      li.append(head, body)
+      list.append(li)
+      shown++
+    }
+
+    // one view per browser per day; the server dedupes again by visitor
+    function shouldCountView() {
+      if (isOwner()) return false
+      try {
+        const last = Number(localStorage.getItem(`blog_seen_${slug}`))
+        if (last && Date.now() - last < 864e5) return false
+        localStorage.setItem(`blog_seen_${slug}`, String(Date.now()))
+      } catch {}
+      return true
+    }
+
+    async function load() {
+      const counted = shouldCountView() ? api('POST', { action: 'view', slug }) : null
+      const { ok, data } = await api('GET', null, `?slug=${encodeURIComponent(slug)}`)
+      $('[data-loading]').hidden = true
+      if (!ok) {
+        $('[data-empty]').textContent = 'Comments are unavailable right now.'
+        $('[data-empty]').hidden = false
+      } else {
+        ;(data.comments || []).forEach(addComment)
+        setCount()
+      }
+      const v = counted ? await counted : null
+      setViews(v?.ok ? v.data.views : data.views)
+    }
+
+    try {
+      const saved = localStorage.getItem('blog_name')
+      if (saved) field('name').value = saved
+      else if (isOwner()) field('name').value = 'Harit'
+    } catch {}
+    if (isOwner()) $('[data-hint]').textContent = 'Posting as the author (owner key).'
+
+    form.addEventListener('submit', async e => {
+      e.preventDefault()
+      const text = field('text').value.trim()
+      if (text.length < 2) { status.textContent = 'Write a little more first.'; return }
+      const btn = $('[data-submit]')
+      btn.disabled = true
+      status.textContent = 'Posting…'
+      const name = field('name').value.trim()
+      const body = { action: 'comment', slug, name, text, website: field('website').value }
+      if (isOwner()) body.key = ownerKey()
+      const { ok, data, status: code } = await api('POST', body)
+      btn.disabled = false
+      if (ok && data.status === 'visible' && data.comment) {
+        addComment(data.comment)
+        setCount()
+        field('text').value = ''
+        status.textContent = 'Posted. Thanks!'
+      } else if (ok) {
+        field('text').value = ''
+        status.textContent = 'Thanks! Your comment will show up once it has been reviewed.'
+      } else {
+        status.textContent = {
+          429: 'You are commenting fast. Try again in a few minutes.',
+          400: 'That comment looks empty.',
+          401: 'The owner key on this browser is out of date. Re-enter it on the Visitor Map.',
+        }[code] || 'Could not post right now. Try again later.'
+      }
+      try { if (name) localStorage.setItem('blog_name', name) } catch {}
+    })
+
+    load()
+  </script>
+</Base>

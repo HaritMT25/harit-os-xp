@@ -1,0 +1,68 @@
+---
+import Base from '../layouts/Base.astro'
+import PostCard from '../components/PostCard.astro'
+import { publishedPosts, SITE_TITLE, SITE_TAGLINE, TAGS, url } from '../lib/site.js'
+
+const posts = await publishedPosts()
+const usedTags = TAGS.filter(t => posts.some(p => p.data.tags.includes(t)))
+---
+<Base description={SITE_TAGLINE}>
+  <section class="intro">
+    <h1>{SITE_TITLE}</h1>
+    <p>{SITE_TAGLINE}</p>
+  </section>
+
+  <p class="owner-bar" data-owner-bar hidden>
+    🔑 Owner mode · <a href={url('moderate/')}>Moderate comments</a> <span data-pending></span>
+  </p>
+
+  {posts.length === 0 ? (
+    <div class="empty-state">
+      <div class="empty-emoji" aria-hidden="true">✍️</div>
+      <p>No posts yet. The first ones are on the way.</p>
+    </div>
+  ) : (
+    <>
+      {usedTags.length > 0 && (
+        <div class="filters" role="group" aria-label="Filter posts">
+          <button type="button" class="chip" aria-pressed="true" data-filter="">All</button>
+          {usedTags.map(t => <button type="button" class="chip" aria-pressed="false" data-filter={t}>{t}</button>)}
+        </div>
+      )}
+      <ul class="cards">
+        {posts.map(post => <PostCard post={post} />)}
+      </ul>
+    </>
+  )}
+
+  <script>
+    import { api, isOwner, ownerKey, plural } from '../scripts/owner.js'
+
+    // tag filter, client-side: the list is short
+    const chips = [...document.querySelectorAll('[data-filter]')]
+    chips.forEach(chip => chip.addEventListener('click', () => {
+      const tag = chip.dataset.filter
+      chips.forEach(c => c.setAttribute('aria-pressed', String(c === chip)))
+      document.querySelectorAll('.card').forEach(card => {
+        card.hidden = !!tag && !card.dataset.tags.split(',').includes(tag)
+      })
+    }))
+
+    api('GET', null, '?views=all').then(({ ok, data }) => {
+      if (!ok || !data.views) return
+      document.querySelectorAll('[data-views-for]').forEach(el => {
+        const n = data.views[el.dataset.viewsFor] || 0
+        if (!n) return
+        el.textContent = `· 👁 ${plural(n, 'view')}`
+        el.hidden = false
+      })
+    })
+
+    if (isOwner()) {
+      document.querySelector('[data-owner-bar]').hidden = false
+      api('POST', { action: 'mod', op: 'list', key: ownerKey() }).then(({ ok, data }) => {
+        if (ok && data.pending) document.querySelector('[data-pending]').textContent = `(${data.pending} waiting)`
+      })
+    }
+  </script>
+</Base>
