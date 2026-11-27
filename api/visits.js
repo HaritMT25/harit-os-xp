@@ -1,4 +1,5 @@
 import Redis from 'ioredis'
+import { checkOwner, clientIp, isBot, OWNER_STATUS } from '../server/owner.js'
 
 // local: redis://localhost:6379
 // upstash: rediss://default:pass@host.upstash.io:6379 (tls)
@@ -70,9 +71,7 @@ const POST_LIMIT = 3
 const POST_WINDOW = 24 * 60 * 60
 
 async function underPostLimit(redis, req) {
-  const ip = (req.headers['x-forwarded-for'] || '').split(',')[0].trim()
-    || req.socket?.remoteAddress || 'unknown'
-  const key = `harit:visit_rl:${ip}`
+  const key = `harit:visit_rl:${clientIp(req)}`
   const n = await redis.incr(key)
   if (n === 1) await redis.expire(key, POST_WINDOW)
   return n <= POST_LIMIT
@@ -158,6 +157,30 @@ async function readPins(redis) {
   return pins
 }
 
+// A cell string the client remembered from its own counted visit
+function parseCell(s) {
+  const m = /^(-?\d{1,3}(?:\.\d+)?),(-?\d{1,3}(?:\.\d+)?)$/.exec(String(s ?? ''))
+  return m ? cellOf({ lat: m[1], lon: m[2] }) : null
+}
+
+// Owner unlock. With discount set, also takes back the one visit this browser
+// was counted for: the cell it remembered, else where the request comes from.
+async function ownerUnlock(redis, req, body, you) {
+  const status = await checkOwner(redis, req, body.key)
+  if (status !== 'ok') return { code: OWNER_STATUS[status], body: { ok: false, error: status } }
+  let discounted = false
+  if (body.discount) {
+    const cell = parseCell(body.cell) || (you && cellOf(you))
+    if (cell && await redis.hexists(PIN_COUNT, cell)) {
+      const left = await redis.hincrby(PIN_COUNT, cell, -1)
+      if (left <= 0) await redis.multi().hdel(PIN_COUNT, cell).hdel(PIN_META, cell).hdel(PIN_NAME, cell).exec()
+      if (await redis.decr(VISIT_COUNT) < 0) await redis.set(VISIT_COUNT, '0')
+      discounted = true
+    }
+  }
+  return { code: 200, body: { ok: true, discounted } }
+}
+
 function publicVisit(v) {
   const { agg, ...rest } = v
   return rest
@@ -178,13 +201,22 @@ export default async function handler(req, res) {
     await redis.connect()
 
     if (req.method === 'POST') {
+      const body = req.body || {}
       // before the push: ltrim must never drop an entry that isn't counted yet
       await ensureMigrated(redis)
+      if (body.type === 'owner') {
+        const out = await ownerUnlock(redis, req, body, you)
+        redis.disconnect()
+        return res.status(out.code).json(out.body)
+      }
+      if (isBot(req)) {
+        redis.disconnect()
+        return res.status(200).json({ ok: true, skipped: 'bot' })
+      }
       if (!(await underPostLimit(redis, req))) {
         redis.disconnect()
         return res.status(429).json({ ok: false, error: 'rate_limited' })
       }
-      const body = req.body || {}
       const visit = {
         name: cleanName(body.name) || 'Anonymous',
         city: you?.city || body.city || 'Unknown',

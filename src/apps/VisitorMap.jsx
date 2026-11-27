@@ -1,10 +1,14 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
+import { isOwner, unlockOwner, forgetOwner } from '../owner'
 
 const API_URL = '/api/visits'
 // CARTO now watermarks unauthenticated raster tiles. Key is free, domain-scoped,
 // and public by nature (the browser fetches the tiles) — not a secret like the Groq key.
 const CARTO_KEY = import.meta.env.VITE_CARTO_KEY || ''
 const TILE_URL = `https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png${CARTO_KEY ? `?key=${CARTO_KEY}` : ''}`
+// The flag font only covers flag codepoints, so it goes first: it draws flags
+// on Windows (see main.jsx) and leaves every other character to Tahoma.
+const FONT = "'Twemoji Country Flags', Tahoma, sans-serif"
 const TILE_ATTRIB = '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>, &copy; <a href="https://carto.com/attributions">CARTO</a>'
 
 // popups are built as HTML strings for Leaflet, so anything from the API
@@ -40,6 +44,12 @@ export default function VisitorMap() {
   const [name, setName] = useState(() => localStorage.getItem('harit_visitor_name') || '')
   const [named, setNamed] = useState(() => !!localStorage.getItem('harit_visitor_name'))
   const [mapReady, setMapReady] = useState(false)
+  // owner key: hidden behind the small key button in the header
+  const [owner, setOwner] = useState(isOwner)
+  const [ownerOpen, setOwnerOpen] = useState(false)
+  const [keyInput, setKeyInput] = useState('')
+  const [ownerMsg, setOwnerMsg] = useState('')
+  const [unlocking, setUnlocking] = useState(false)
 
   // init map
   useEffect(() => {
@@ -63,7 +73,7 @@ export default function VisitorMap() {
   }, [])
 
   // geolocate (just for display, not registering — App.jsx handles that) + load visits
-  useEffect(() => {
+  const loadVisits = useCallback((fly) => {
     let cancelled = false
     safeFetchJson(API_URL).then(data => {
       if (cancelled || !data) return
@@ -72,11 +82,33 @@ export default function VisitorMap() {
       setTotal(data.total || 0)
       if (data.you) {
         setMyLocation(data.you)
-        try { if (mapInstanceRef.current) mapInstanceRef.current.flyTo([data.you.lat, data.you.lon], 4, { duration: 1.5 }) } catch {}
+        if (fly) try { if (mapInstanceRef.current) mapInstanceRef.current.flyTo([data.you.lat, data.you.lon], 4, { duration: 1.5 }) } catch {}
       }
     }).finally(() => { if (!cancelled) setLoading(false) })
     return () => { cancelled = true }
   }, [])
+  useEffect(() => loadVisits(true), [loadVisits])
+
+  const handleUnlock = useCallback(async () => {
+    const key = keyInput.trim()
+    if (!key || unlocking) return
+    setUnlocking(true)
+    setOwnerMsg('')
+    const result = await unlockOwner(key)
+    setUnlocking(false)
+    if (result === 'ok') {
+      setOwner(true)
+      setKeyInput('')
+      setOwnerMsg('')
+      loadVisits(false)
+      return
+    }
+    setOwnerMsg({
+      bad: 'Wrong key.',
+      locked: 'Too many tries. Wait an hour.',
+      unset: 'No owner key is set on the server yet.',
+    }[result] || 'Could not reach the server.')
+  }, [keyInput, unlocking, loadVisits])
 
   // render pins — blue for anonymous, gold for named
   useEffect(() => {
@@ -103,7 +135,7 @@ export default function VisitorMap() {
         })
         const m = L.marker([v.lat, v.lon], { icon }).addTo(map)
         const nameLabel = isNamed ? v.name : 'Anonymous'
-        m.bindPopup(`<div style="font-family:Tahoma,sans-serif;font-size:11px;min-width:90px"><strong>${esc(v.flag || '🌍')} ${esc(nameLabel)}</strong><br>${esc(v.city)}, ${esc(v.country)}${v.count > 1 ? `<br><span style="color:#888">${Number(v.count)} visitors</span>` : ''}</div>`)
+        m.bindPopup(`<div style="font-family:${FONT.replace(/"/g, "'")};font-size:11px;min-width:90px"><strong>${esc(v.flag || '🌍')} ${esc(nameLabel)}</strong><br>${esc(v.city)}, ${esc(v.country)}${v.count > 1 ? `<br><span style="color:#888">${Number(v.count)} visitors</span>` : ''}</div>`)
         markersRef.current.push(m)
       })
 
@@ -111,7 +143,7 @@ export default function VisitorMap() {
       if (myLocation && !pins.some(v => Math.abs(v.lat - myLocation.lat) < 1 && Math.abs(v.lon - myLocation.lon) < 1)) {
         const icon = L.divIcon({ className: '', html: '<div style="width:14px;height:14px;border-radius:50%;background:#ff4466;border:2px solid #fff;box-shadow:0 0 10px rgba(255,68,102,0.6)"></div>', iconSize: [14, 14], iconAnchor: [7, 7] })
         const m = L.marker([myLocation.lat, myLocation.lon], { icon }).addTo(map)
-        m.bindPopup(`<div style="font-family:Tahoma,sans-serif;font-size:11px"><strong>${esc(myLocation.flag)} You</strong><br>${esc(myLocation.city)}, ${esc(myLocation.country)}</div>`)
+        m.bindPopup(`<div style="font-family:${FONT.replace(/"/g, "'")};font-size:11px"><strong>${esc(myLocation.flag)} You</strong><br>${esc(myLocation.city)}, ${esc(myLocation.country)}</div>`)
         markersRef.current.push(m)
       }
     }).catch(() => {})
@@ -151,12 +183,39 @@ export default function VisitorMap() {
           <div style={styles.counterNum}>{total}</div>
           <div style={styles.counterLabel}>visits</div>
         </div>
+        <button
+          style={{ ...styles.keyBtn, opacity: owner || ownerOpen ? 1 : 0.35 }}
+          onClick={() => { setOwnerOpen(o => !o); setOwnerMsg('') }}
+          title={owner ? 'Owner mode is on' : 'Owner'}
+          aria-label="Owner key"
+        >🔑</button>
       </div>
 
       <div ref={mapRef} style={styles.mapDiv} />
 
       <div style={styles.bar}>
-        {named ? (
+        {ownerOpen ? (
+          owner ? (
+            <div style={styles.signRow}>
+              <span style={styles.ownerOn}>🔑 Owner mode: this browser isn't counted as a visitor.</span>
+              <button style={styles.signBtn} onClick={() => { forgetOwner(); setOwner(false); setOwnerOpen(false) }}>Turn off</button>
+            </div>
+          ) : (
+            <div style={styles.signRow}>
+              <span style={styles.signLabel}>Owner key</span>
+              <input
+                style={styles.signInput} type="password" value={keyInput} autoFocus
+                onChange={e => setKeyInput(e.target.value)}
+                onKeyDown={e => { if (e.key === 'Enter') handleUnlock() }}
+                placeholder="Stops counting this browser"
+              />
+              <button style={styles.signBtn} onClick={handleUnlock} disabled={!keyInput.trim() || unlocking}>
+                {unlocking ? '...' : 'Unlock'}
+              </button>
+              {ownerMsg && <span style={styles.ownerErr}>{ownerMsg}</span>}
+            </div>
+          )
+        ) : named ? (
           <div style={styles.signed}>📍 {name} was here — {myLocation?.city}, {myLocation?.country} {myLocation?.flag}</div>
         ) : myLocation ? (
           <div style={styles.signRow}>
@@ -189,7 +248,7 @@ export default function VisitorMap() {
 }
 
 const styles = {
-  container: { height: '100%', display: 'flex', flexDirection: 'column', fontFamily: "'Tahoma', sans-serif", fontSize: 11, background: '#0a1628' },
+  container: { height: '100%', display: 'flex', flexDirection: 'column', fontFamily: FONT, fontSize: 11, background: '#0a1628' },
   header: { background: 'linear-gradient(180deg, #0d1f35, #0a1628)', padding: '10px 14px', display: 'flex', alignItems: 'center', gap: 10, flexShrink: 0, borderBottom: '1px solid #1a3050' },
   headerTitle: { color: '#fff', fontWeight: 700, fontSize: 14 },
   headerSub: { color: '#6a9ec8', fontSize: 11, marginTop: 1 },
@@ -203,8 +262,11 @@ const styles = {
   bar: { padding: '10px 14px', background: '#0d1f35', borderTop: '1px solid #1a3050', flexShrink: 0 },
   signRow: { display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' },
   signLabel: { color: '#6a9ec8', fontSize: 11, flexShrink: 0 },
-  signInput: { flex: 1, minWidth: 100, padding: '5px 8px', border: '1px solid #1a3a5c', borderRadius: 3, background: '#081420', color: '#ddd', fontSize: 11, fontFamily: "'Tahoma', sans-serif", outline: 'none' },
-  signBtn: { padding: '5px 12px', border: '1px solid #2a5a7c', borderRadius: 3, background: 'linear-gradient(180deg, #1a4a6c, #0d2840)', color: '#88c8e8', cursor: 'pointer', fontSize: 11, fontFamily: "'Tahoma', sans-serif", fontWeight: 700, whiteSpace: 'nowrap' },
+  signInput: { flex: 1, minWidth: 100, padding: '5px 8px', border: '1px solid #1a3a5c', borderRadius: 3, background: '#081420', color: '#ddd', fontSize: 11, fontFamily: FONT, outline: 'none' },
+  signBtn: { padding: '5px 12px', border: '1px solid #2a5a7c', borderRadius: 3, background: 'linear-gradient(180deg, #1a4a6c, #0d2840)', color: '#88c8e8', cursor: 'pointer', fontSize: 11, fontFamily: FONT, fontWeight: 700, whiteSpace: 'nowrap' },
+  keyBtn: { background: 'none', border: 'none', cursor: 'pointer', fontSize: 13, padding: 2, lineHeight: 1, alignSelf: 'flex-start' },
+  ownerOn: { color: '#66ddaa', fontSize: 11, flex: 1 },
+  ownerErr: { color: '#ff7a8a', fontSize: 11 },
   signed: { color: '#66ddaa', fontSize: 12, padding: '2px 0' },
   recentBar: { padding: '4px 12px 6px', background: '#081420', borderTop: '1px solid #0d1f35', display: 'flex', alignItems: 'center', gap: 4, flexShrink: 0, overflow: 'hidden' },
   recentLabel: { color: '#3a6a8c', fontSize: 9, flexShrink: 0 },
