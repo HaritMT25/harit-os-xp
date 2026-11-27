@@ -40,6 +40,8 @@
     <script>
       window.dataLayer = window.dataLayer || [];
       function gtag(){dataLayer.push(arguments);}
+      // owner mode (Visitor Map key): this browser sends nothing to GA4
+      try { if (localStorage.getItem('harit_owner_key')) window['ga-disable-G-9ZHJTDNQ48'] = true; } catch (e) {}
       gtag('js', new Date());
       gtag('config', 'G-9ZHJTDNQ48', { send_page_view: false });
     </script>

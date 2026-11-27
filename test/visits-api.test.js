@@ -24,8 +24,10 @@ async function freshHandler() {
   return (await import('../api/visits.js')).default
 }
 
-function call(handler, { method = 'GET', body, ip = '10.0.0.1', geo } = {}) {
-  const headers = { 'x-forwarded-for': ip }
+const BROWSER = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36'
+
+function call(handler, { method = 'GET', body, ip = '10.0.0.1', geo, ua = BROWSER } = {}) {
+  const headers = { 'x-forwarded-for': ip, 'user-agent': ua }
   if (geo) {
     headers['x-vercel-ip-city'] = encodeURIComponent(geo.city)
     headers['x-vercel-ip-country'] = geo.cc
@@ -167,5 +169,88 @@ describe('POST /api/visits', () => {
     const { body } = await call(h)
     expect(pinAt(body.pins, 42.4, -71.1).count).toBe(3)
     expect(body.total).toBe(3)
+  })
+})
+
+describe('POST /api/visits bot filter', () => {
+  it('does not count crawlers or clients with no user agent', async () => {
+    const h = await freshHandler()
+    for (const ua of ['Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)',
+      'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/120.0.0.0 Safari/537.36',
+      'LinkedInBot/1.0 (compatible; Mozilla/5.0)', '']) {
+      const r = await call(h, { method: 'POST', body: { type: 'auto' }, geo: BOSTON, ua })
+      expect(r.body).toMatchObject({ ok: true, skipped: 'bot' })
+    }
+    const { body } = await call(h)
+    expect(body.total).toBe(0)
+    expect(body.pins).toHaveLength(0)
+  })
+})
+
+describe('owner key', () => {
+  const owner = (h, body, opts = {}) => call(h, { method: 'POST', body: { type: 'owner', ...body }, geo: BOSTON, ...opts })
+
+  beforeEach(() => { process.env.OWNER_KEY = 'right-key' })
+  afterAll(() => { delete process.env.OWNER_KEY })
+
+  it('says so when no key is configured', async () => {
+    delete process.env.OWNER_KEY
+    const r = await owner(await freshHandler(), { key: 'anything' })
+    expect(r).toMatchObject({ status: 503, body: { ok: false, error: 'unset' } })
+  })
+
+  it('rejects a wrong key and locks the IP after five misses, even for the right key', async () => {
+    const h = await freshHandler()
+    for (let i = 0; i < 5; i++) expect((await owner(h, { key: 'guess' + i })).status).toBe(401)
+    expect(await owner(h, { key: 'right-key' })).toMatchObject({ status: 429, body: { error: 'locked' } })
+    // another IP is unaffected
+    expect((await owner(h, { key: 'right-key' }, { ip: '10.9.9.9' })).status).toBe(200)
+  })
+
+  it('unlocks without touching counts unless asked to discount', async () => {
+    const h = await freshHandler()
+    await call(h, { method: 'POST', body: { type: 'auto' }, geo: BOSTON })
+    expect(await owner(h, { key: 'right-key' })).toMatchObject({ status: 200, body: { ok: true, discounted: false } })
+    const { body } = await call(h)
+    expect(body.total).toBe(1)
+  })
+
+  it('takes back the remembered visit, removing the pin when it was the only one', async () => {
+    const h = await freshHandler()
+    await call(h, { method: 'POST', body: { type: 'auto' }, geo: PARIS, ip: '10.0.0.2' })
+    await call(h, { method: 'POST', body: { type: 'auto' }, geo: BOSTON, ip: '10.0.0.3' })
+    await call(h, { method: 'POST', body: { type: 'auto' }, geo: BOSTON, ip: '10.0.0.4' })
+    // the owner's browser was counted in Paris but unlocks from Boston
+    const r = await owner(h, { key: 'right-key', discount: true, cell: '48.9,2.4' })
+    expect(r.body).toEqual({ ok: true, discounted: true })
+    const { body } = await call(h)
+    expect(body.total).toBe(2)
+    expect(pinAt(body.pins, 48.9, 2.4)).toBeUndefined()
+    expect(pinAt(body.pins, 42.4, -71.1).count).toBe(2)
+  })
+
+  it('falls back to the request location when no cell was remembered, and ignores junk cells', async () => {
+    const h = await freshHandler()
+    await call(h, { method: 'POST', body: { type: 'auto' }, geo: BOSTON, ip: '10.0.0.3' })
+    await call(h, { method: 'POST', body: { type: 'auto' }, geo: BOSTON, ip: '10.0.0.4' })
+    const r = await owner(h, { key: 'right-key', discount: true, cell: 'x,<script>' })
+    expect(r.body.discounted).toBe(true)
+    const { body } = await call(h)
+    expect(body.total).toBe(1)
+    expect(pinAt(body.pins, 42.4, -71.1).count).toBe(1)
+  })
+
+  it('does not discount a place with no pin', async () => {
+    const h = await freshHandler()
+    await call(h, { method: 'POST', body: { type: 'auto' }, geo: BOSTON })
+    const r = await owner(h, { key: 'right-key', discount: true, cell: '10,10' })
+    expect(r.body.discounted).toBe(false)
+    expect((await call(h)).body.total).toBe(1)
+  })
+
+  it('does not use up the visit rate limit', async () => {
+    const h = await freshHandler()
+    for (let i = 0; i < 4; i++) await owner(h, { key: 'right-key' })
+    expect((await call(h, { method: 'POST', body: { type: 'auto' }, geo: BOSTON })).status).toBe(200)
   })
 })

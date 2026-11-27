@@ -2,10 +2,17 @@ import React, { Component } from 'react'
 import ReactDOM from 'react-dom/client'
 import App from './App'
 import { Analytics } from '@vercel/analytics/react'
+import { polyfillCountryFlagEmojis } from 'country-flag-emoji-polyfill'
+import flagFontUrl from 'country-flag-emoji-polyfill/dist/TwemojiCountryFlags.woff2?url'
+import { isOwner } from './owner'
 import './styles/xp-theme.css'
 import './styles/animations.css'
 import './styles/print.css'
 import 'leaflet/dist/leaflet.css'
+
+// Windows has no flag emoji, so Chrome/Edge there print "US" instead of the
+// flag. This adds a flags-only web font (self-hosted) on those browsers only.
+try { polyfillCountryFlagEmojis('Twemoji Country Flags', flagFontUrl) } catch {}
 
 // top-level error boundary — never shows a white screen
 class AppErrorBoundary extends Component {
@@ -44,7 +51,7 @@ ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
     <AppErrorBoundary>
       <App />
-      <Analytics />
+      <Analytics beforeSend={e => (isOwner() ? null : e)} />
     </AppErrorBoundary>
   </React.StrictMode>
 )

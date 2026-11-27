@@ -87,6 +87,12 @@ Edit `src/apps/InternetExplorer.jsx` — add deployed URLs to the `BOOKMARKS` ar
 
 `src/apps/EvoBoids.jsx` embeds the Finfolk demo (formerly evo_boids) from its own Vercel project, https://finfolk-sim.vercel.app/ (formerly https://evo-boids.vercel.app/, which still works). The URL is `EVOBOIDS_URL` in `src/data/demo-urls.js`, shared with the Internet Explorer bookmark and the projects' "Try it" links. The `VITE_EVOBOIDS_URL` environment variable overrides it, for example to test a local build. If it is ever set to empty, the window and the bookmark show "coming soon". Inside the iframe the demo runs its single-threaded build, because this site does not send the cross-origin-isolation headers (COOP/COEP) that its threaded build needs, and adding them would break the other embeds. "Open full version" opens it in a new tab, where it gets them.
 
+### Visitor Map: owner key, bots, flags
+
+The 🔑 button in the Visitor Map's header takes the owner key (Vercel env `OWNER_KEY`). The server checks it and allows five wrong tries per IP per hour. Once unlocked, that browser takes back the one visit it was counted for and is never counted again: no map visit, no GA4 or Vercel Analytics events, and later no blog views. "Turn off" forgets the key. The visits API also ignores crawlers that run JavaScript (Googlebot, headless Chrome, link previewers).
+
+Windows has no flag emoji, so Chrome and Edge there show "US" instead of 🇺🇸. `main.jsx` loads [country-flag-emoji-polyfill](https://github.com/talkjs/country-flag-emoji-polyfill) with its font bundled from npm (no CDN), only on browsers that need it. The flag glyphs are [Twemoji](https://github.com/jdecked/twemoji) (CC-BY 4.0).
+
 ### Sound Effects
 
 All UI sounds (startup chime, clicks, minimize/close, notifications) are synthesized at runtime with the Web Audio API — no audio files, and every melody is original. Silently no-ops if the browser blocks audio.
